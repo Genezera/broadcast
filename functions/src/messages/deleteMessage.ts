@@ -18,7 +18,7 @@ export const deleteMessage = onCall(callableOptions, async (request) => {
   // o documento some e a varredura simplesmente não o encontra mais.
   await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(ref);
-    assertBelongsToTenant(snapshot, tenantId, "Mensagem não encontrada.");
+    assertBelongsToTenant(snapshot, tenantId, "messageNotFound");
     transaction.delete(ref);
   });
 

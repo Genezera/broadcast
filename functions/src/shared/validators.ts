@@ -1,35 +1,32 @@
-import { HttpsError } from "firebase-functions/v2/https";
 import { z } from "zod";
 import { LIMITS } from "../config";
+import { fail, isErrorKey } from "./errors";
+
+// As mensagens dos schemas são chaves de erro (ver shared/errors.ts), que o
+// cliente traduz. Por isso aqui aparecem nomes como "bodyEmpty", não frases.
 
 // IDs que chegam do cliente viram caminho de documento (collection.doc(id)).
 // Restrinjo o formato para não aceitar "/" ou ".." e escapar da coleção.
 const documentId = z
-  .string({ error: "Identificador inválido." })
-  .regex(/^[A-Za-z0-9_-]{1,128}$/, "Identificador inválido.");
+  .string({ error: "invalidId" })
+  .regex(/^[A-Za-z0-9_-]{1,128}$/, "invalidId");
 
 const body = z
-  .string({ error: "A mensagem é obrigatória." })
+  .string({ error: "bodyRequired" })
   .trim()
-  .min(1, "A mensagem não pode ficar vazia.")
-  .max(
-    LIMITS.messageBodyMaxLength,
-    `A mensagem deve ter no máximo ${LIMITS.messageBodyMaxLength} caracteres.`,
-  );
+  .min(1, "bodyEmpty")
+  .max(LIMITS.messageBodyMaxLength, "bodyTooLong");
 
 const contactIds = z
-  .array(documentId, { error: "Selecione pelo menos um contato." })
-  .min(1, "Selecione pelo menos um contato.")
-  .max(
-    LIMITS.maxRecipients,
-    `Selecione no máximo ${LIMITS.maxRecipients} contatos.`,
-  )
-  .refine((ids) => new Set(ids).size === ids.length, "Contatos duplicados.");
+  .array(documentId, { error: "noRecipients" })
+  .min(1, "noRecipients")
+  .max(LIMITS.maxRecipients, "tooManyRecipients")
+  .refine((ids) => new Set(ids).size === ids.length, "duplicateRecipients");
 
 // mode + scheduledAt são validados em duas etapas: aqui o formato (ISO 8601
 // com fuso) e, em resolveScheduleMs, a regra de negócio (futuro, até 1 ano).
 const schedule = {
-  mode: z.enum(["now", "scheduled"], { error: "Agendamento inválido." }),
+  mode: z.enum(["now", "scheduled"], { error: "invalidSchedule" }),
   scheduledAt: z.iso.datetime({ offset: true }).nullish(),
 };
 
@@ -50,9 +47,15 @@ export const updateMessageInput = z.object({
 export const deleteMessageInput = z.object({ messageId: documentId });
 export const deleteConnectionInput = z.object({ connectionId: documentId });
 
+// Valores usados nas frases com {max}.
+const PARAMS = {
+  bodyTooLong: { max: LIMITS.messageBodyMaxLength },
+  tooManyRecipients: { max: LIMITS.maxRecipients },
+} as const;
+
 /**
  * Valida o payload de uma callable e traduz falhas para `HttpsError`.
- * Devolvo só a primeira mensagem de erro: é a que o usuário vê na tela.
+ * Devolvo só o primeiro erro: é o que o usuário vê na tela.
  */
 export const parseInput = <T extends z.ZodType>(
   schema: T,
@@ -60,9 +63,12 @@ export const parseInput = <T extends z.ZodType>(
 ): z.infer<T> => {
   const result = schema.safeParse(data);
   if (!result.success) {
-    throw new HttpsError(
+    const message = result.error.issues[0]?.message ?? "";
+    const key = isErrorKey(message) ? message : "invalidData";
+    throw fail(
       "invalid-argument",
-      result.error.issues[0]?.message ?? "Dados inválidos.",
+      key,
+      key in PARAMS ? PARAMS[key as keyof typeof PARAMS] : undefined,
     );
   }
   return result.data;
@@ -84,10 +90,7 @@ export const resolveScheduleMs = (
     scheduledMs <= nowMs ||
     scheduledMs > nowMs + LIMITS.maxScheduleAheadMs
   ) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Escolha um horário futuro dentro de um ano.",
-    );
+    throw fail("invalid-argument", "scheduleOutOfRange");
   }
   return scheduledMs;
 };

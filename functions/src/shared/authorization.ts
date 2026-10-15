@@ -1,14 +1,9 @@
 import type { DocumentSnapshot } from "firebase-admin/firestore";
-import { HttpsError } from "firebase-functions/v2/https";
+import { fail, type ErrorKey } from "./errors";
 
 /** O `uid` do Firebase Authentication é o identificador do tenant. */
 export const requireTenantId = (uid: string | undefined): string => {
-  if (!uid) {
-    throw new HttpsError(
-      "unauthenticated",
-      "Entre na sua conta para continuar.",
-    );
-  }
+  if (!uid) throw fail("unauthenticated", "authRequired");
   return uid;
 };
 
@@ -27,9 +22,9 @@ export const belongsToTenant = (
 export const assertBelongsToTenant = (
   snapshot: DocumentSnapshot,
   tenantId: string,
-  notFoundMessage: string,
+  notFoundKey: Extract<ErrorKey, "connectionNotFound" | "messageNotFound">,
 ): void => {
   if (!belongsToTenant(snapshot, tenantId)) {
-    throw new HttpsError("not-found", notFoundMessage);
+    throw fail("not-found", notFoundKey);
   }
 };

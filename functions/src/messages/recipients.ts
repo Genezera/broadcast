@@ -3,9 +3,9 @@ import type {
   DocumentSnapshot,
   Transaction,
 } from "firebase-admin/firestore";
-import { HttpsError } from "firebase-functions/v2/https";
 import { collections } from "../firebase";
 import { belongsToTenant } from "../shared/authorization";
+import { fail } from "../shared/errors";
 import type { Recipient } from "../shared/types";
 
 /** Exige que a conexão exista, seja do tenant e não esteja em exclusão. */
@@ -21,7 +21,7 @@ export const assertActiveConnection = async (
     !belongsToTenant(connection, tenantId) ||
     connection.get("status") !== "active"
   ) {
-    throw new HttpsError("not-found", "Conexão não encontrada.");
+    throw fail("not-found", "connectionNotFound");
   }
 };
 
@@ -59,9 +59,6 @@ export const resolveRecipients = async (
     // nesta mesma mensagem, para o histórico continuar completo na edição.
     const archived = previous.find((recipient) => recipient.id === snapshot.id);
     if (archived && !snapshot.exists) return archived;
-    throw new HttpsError(
-      "invalid-argument",
-      "Um dos contatos não pertence a esta conexão.",
-    );
+    throw fail("invalid-argument", "recipientNotInConnection");
   });
 };

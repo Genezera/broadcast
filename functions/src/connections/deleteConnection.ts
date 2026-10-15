@@ -49,7 +49,7 @@ export const deleteConnection = onCall(
     // limpeza abaixo não corre contra novas gravações.
     await db.runTransaction(async (transaction) => {
       const snapshot = await transaction.get(ref);
-      assertBelongsToTenant(snapshot, tenantId, "Conexão não encontrada.");
+      assertBelongsToTenant(snapshot, tenantId, "connectionNotFound");
       transaction.update(ref, {
         status: "deleting",
         updatedAt: FieldValue.serverTimestamp(),

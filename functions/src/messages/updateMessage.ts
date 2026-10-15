@@ -1,5 +1,5 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
-import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onCall } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import { callableOptions } from "../config";
 import { collections, db } from "../firebase";
@@ -7,6 +7,7 @@ import {
   assertBelongsToTenant,
   requireTenantId,
 } from "../shared/authorization";
+import { fail } from "../shared/errors";
 import type { Recipient } from "../shared/types";
 import {
   parseInput,
@@ -30,7 +31,7 @@ export const updateMessage = onCall(callableOptions, async (request) => {
     // Releio a mensagem dentro da transação: se o agendador a marcar como
     // enviada enquanto o usuário edita, quem vale é o estado atual.
     const current = await transaction.get(ref);
-    assertBelongsToTenant(current, tenantId, "Mensagem não encontrada.");
+    assertBelongsToTenant(current, tenantId, "messageNotFound");
     // A conexão sai do documento salvo, não do request. Assim não dá para
     // "mover" uma mensagem para outra conexão editando.
     const connectionId = current.get("connectionId") as string;
@@ -48,10 +49,7 @@ export const updateMessage = onCall(callableOptions, async (request) => {
     // Se o agendador enviou a mensagem entre abrir e salvar a edição, não
     // deixo ela voltar para "agendada" (seria um segundo envio).
     if (alreadySent && scheduledMs !== null) {
-      throw new HttpsError(
-        "failed-precondition",
-        "Uma mensagem enviada não pode voltar a ser agendada.",
-      );
+      throw fail("failed-precondition", "sentCannotReschedule");
     }
 
     const now = FieldValue.serverTimestamp();

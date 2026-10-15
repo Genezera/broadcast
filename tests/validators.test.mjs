@@ -48,3 +48,16 @@ test("parseInput trims the body and reports user-facing messages", () => {
     code: "invalid-argument",
   });
 });
+
+test("validation errors carry a stable key for the client to translate", () => {
+  assert.throws(
+    () => parseInput(createMessageInput, { ...base, body: " " }),
+    (error) => error.details?.key === "bodyEmpty",
+  );
+  assert.throws(
+    () => parseInput(createMessageInput, { ...base, body: "x".repeat(2001) }),
+    (error) =>
+      error.details?.key === "bodyTooLong" &&
+      typeof error.details.params?.max === "number",
+  );
+});
