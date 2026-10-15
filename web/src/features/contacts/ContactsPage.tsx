@@ -101,6 +101,7 @@ export function ContactsPage() {
           </div>
           <TextField
             placeholder="Buscar por nome ou telefone"
+            sx={{ width: { xs: "100%", sm: 280 } }}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             slotProps={{

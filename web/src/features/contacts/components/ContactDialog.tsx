@@ -10,6 +10,8 @@ import {
   Stack,
 } from "@mui/material";
 import { useNotify } from "../../../app/providers/NotificationProvider";
+import { useResponsiveDialog } from "../../../components/ui/useResponsiveDialog";
+import { FormPhoneField } from "../../../components/ui/FormPhoneField";
 import { FormTextField } from "../../../components/ui/FormTextField";
 import { getErrorMessage } from "../../../lib/errors";
 import type { Contact } from "../../../types";
@@ -31,6 +33,7 @@ export function ContactDialog({
   onClose,
 }: ContactDialogProps) {
   const notify = useNotify();
+  const responsiveDialog = useResponsiveDialog();
   const editing = target && target !== "new" ? target : null;
   const { control, handleSubmit, reset, formState } =
     useForm<ContactFormValues>({
@@ -56,8 +59,18 @@ export function ContactDialog({
   });
 
   return (
-    <Dialog open={!!target} onClose={onClose} maxWidth="xs" fullWidth>
-      <form onSubmit={submit} noValidate>
+    <Dialog
+      open={!!target}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      {...responsiveDialog}
+    >
+      <form
+        onSubmit={submit}
+        noValidate
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <DialogTitle>{editing ? "Editar contato" : "Novo contato"}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
@@ -69,14 +82,7 @@ export function ContactDialog({
               autoFocus
               slotProps={{ htmlInput: { maxLength: 100 } }}
             />
-            <FormTextField
-              control={control}
-              name="phone"
-              label="Telefone"
-              fullWidth
-              placeholder="+55 11 99999-9999"
-              slotProps={{ htmlInput: { maxLength: 24, inputMode: "tel" } }}
-            />
+            <FormPhoneField control={control} name="phone" label="Telefone" />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>

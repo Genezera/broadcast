@@ -20,7 +20,8 @@ export function ConnectionSelect({
       onChange={(event) =>
         navigate(`/connections/${event.target.value}/${section}`)
       }
-      sx={{ minWidth: 190 }}
+      className="min-w-0 flex-1 sm:flex-none"
+      sx={{ minWidth: { sm: 190 } }}
       slotProps={{ htmlInput: { "aria-label": "Selecionar conexão" } }}
     >
       {activeConnections.map((connection) => (

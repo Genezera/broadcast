@@ -1,12 +1,11 @@
 import { RouterProvider } from "react-router-dom";
-import CssBaseline from "@mui/material/CssBaseline";
 import GlobalStyles from "@mui/material/GlobalStyles";
-import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
+import { StyledEngineProvider } from "@mui/material/styles";
 import { SplashScreen } from "../components/ui/SplashScreen";
 import { AuthProvider, useAuth } from "../features/auth/AuthProvider";
 import { NotificationProvider } from "./providers/NotificationProvider";
+import { ThemeModeProvider } from "./providers/ThemeModeProvider";
 import { router } from "./routes/router";
-import { theme } from "./theme";
 
 // A splash fica acima do router: a tela de baixo já monta enquanto o painel
 // roxo ainda cobre, e é revelada quando ele abre.
@@ -27,14 +26,13 @@ export default function App() {
     // sobrescrever um componente do MUI sem precisar de !important.
     <StyledEngineProvider enableCssLayer>
       <GlobalStyles styles="@layer theme, base, mui, components, utilities;" />
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
+      <ThemeModeProvider>
         <NotificationProvider>
           <AuthProvider>
             <AppContent />
           </AuthProvider>
         </NotificationProvider>
-      </ThemeProvider>
+      </ThemeModeProvider>
     </StyledEngineProvider>
   );
 }

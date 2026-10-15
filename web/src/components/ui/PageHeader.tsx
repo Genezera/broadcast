@@ -18,7 +18,9 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
           {description}
         </Typography>
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {actions && (
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">{actions}</div>
+      )}
     </div>
   );
 }

@@ -2,20 +2,79 @@
 @layer theme, base, mui, components, utilities;
 @import "tailwindcss";
 
-/* Tokens do design: viram classes (text-brand, bg-success-soft, border-line...). */
-@theme {
+/*
+ * Tema claro/escuro. Toda cor da interface vem destas variáveis; o tema
+ * escuro só redefine os valores (atributo data-theme="dark" no <html>).
+ * As classes do Tailwind (bg-surface, text-ink, border-line...) leem delas.
+ */
+:root {
+  color-scheme: light;
+  --c-bg: #f7f8fb;
+  --c-surface: #ffffff;
+  --c-surface-muted: #fbfbfd;
+  --c-surface-hover: #f8f7ff;
+  --c-line: #edf0f5;
+  --c-line-strong: #e3e6ee;
+  --c-ink: #34354f;
+  --c-muted: #9da0b1;
+  --c-subtle: #7f8298;
+  --c-nav: #9295aa;
+  --c-brand: #6556eb;
+  --c-brand-soft: #f0eeff;
+  --c-success: #229e87;
+  --c-success-soft: #eafaf6;
+  --c-info: #5989f5;
+  --c-info-soft: #ebf1ff;
+  --c-warning: #b67a2b;
+  --c-warning-soft: #fff4e7;
+  --shadow-card: 0 8px 26px rgba(37, 39, 81, 0.025);
+  --shadow-hover: 0 14px 34px rgba(37, 39, 81, 0.09);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --c-bg: #0d0e1a;
+  --c-surface: #151625;
+  --c-surface-muted: #1a1b2d;
+  --c-surface-hover: #1e1f34;
+  --c-line: #262841;
+  --c-line-strong: #323453;
+  --c-ink: #e8e9f6;
+  --c-muted: #8b8da8;
+  --c-subtle: #a6a8c0;
+  --c-nav: #9a9cb7;
+  --c-brand: #8377f5;
+  --c-brand-soft: rgba(131, 119, 245, 0.16);
+  --c-success: #45d2b3;
+  --c-success-soft: rgba(69, 210, 179, 0.14);
+  --c-info: #7fa4ff;
+  --c-info-soft: rgba(127, 164, 255, 0.15);
+  --c-warning: #e8a64e;
+  --c-warning-soft: rgba(232, 166, 78, 0.15);
+  --shadow-card: 0 8px 26px rgba(0, 0, 0, 0.25);
+  --shadow-hover: 0 14px 34px rgba(0, 0, 0, 0.45);
+}
+
+/* Tokens do design: viram classes (text-brand, bg-surface, border-line...). */
+@theme inline {
   --font-display: "Manrope", sans-serif;
-  --color-brand: #6556eb;
-  --color-brand-soft: #f0eeff;
-  --color-ink: #34354f;
-  --color-muted: #9da0b1;
-  --color-line: #edf0f5;
-  --color-success: #229e87;
-  --color-success-soft: #eafaf6;
-  --color-info: #5989f5;
-  --color-info-soft: #ebf1ff;
-  --color-warning: #b67a2b;
-  --color-warning-soft: #fff4e7;
+  --color-page: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-muted: var(--c-surface-muted);
+  --color-surface-hover: var(--c-surface-hover);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+  --color-ink: var(--c-ink);
+  --color-muted: var(--c-muted);
+  --color-subtle: var(--c-subtle);
+  --color-brand: var(--c-brand);
+  --color-brand-soft: var(--c-brand-soft);
+  --color-success: var(--c-success);
+  --color-success-soft: var(--c-success-soft);
+  --color-info: var(--c-info);
+  --color-info-soft: var(--c-info-soft);
+  --color-warning: var(--c-warning);
+  --color-warning-soft: var(--c-warning-soft);
 }
 
 /* Animações. Todas respeitam prefers-reduced-motion (ver bloco no fim). */
@@ -75,7 +134,6 @@
     transform: translateX(250%);
   }
 }
-
 @keyframes slide-in {
   from {
     opacity: 0;
@@ -90,6 +148,16 @@
   from {
     opacity: 0;
     transform: translateY(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
   }
   to {
     opacity: 1;
@@ -138,7 +206,45 @@
   body {
     margin: 0;
     min-width: 320px;
+    background: var(--c-bg);
+    color: var(--c-ink);
   }
+  /* Celular: 16px nos campos evita o zoom automático do iOS ao focar. */
+  @media (max-width: 639px) {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
+  }
+}
+
+/*
+ * Troca de tema. No navegador com View Transitions a troca é uma revelação
+ * circular a partir do botão (animada em app/providers/ThemeModeProvider);
+ * nos demais, uma transição suave de cores.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+.theme-switching,
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition:
+    background-color 0.5s ease,
+    color 0.5s ease,
+    border-color 0.5s ease,
+    fill 0.5s ease,
+    box-shadow 0.5s ease !important;
 }
 
 @layer components {
@@ -185,6 +291,9 @@
   .animate-drop-in {
     animation: drop-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.35s backwards;
   }
+  .animate-rise-in {
+    animation: rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.4s backwards;
+  }
 
   /* Abertura do site (SplashScreen). */
   .splash {
@@ -200,8 +309,9 @@
     position: absolute;
     width: 620px;
     height: 620px;
+    max-width: 120vw;
     border-radius: 9999px;
-    background: var(--color-brand);
+    background: #6556eb;
     opacity: 0.28;
     filter: blur(130px);
     animation: float 10s ease-in-out infinite;
@@ -269,16 +379,18 @@
     animation: float 14s ease-in-out infinite;
   }
 
-  /* Cards: sobem de leve ao passar o mouse. */
+  /* Cards: sobem de leve ao passar o mouse (só em dispositivos com mouse). */
   .hover-lift {
     transition:
       transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
       box-shadow 0.25s ease,
       border-color 0.25s ease;
   }
-  .hover-lift:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 14px 34px rgba(37, 39, 81, 0.09);
+  @media (hover: hover) {
+    .hover-lift:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-hover);
+    }
   }
   .hover-lift:active {
     transform: translateY(-1px) scale(0.995);
@@ -302,10 +414,10 @@
     height: 36px;
   }
   .surface {
-    background: #fff;
-    border: 1px solid #ebedf4;
+    background: var(--c-surface);
+    border: 1px solid var(--c-line);
     border-radius: 17px;
-    box-shadow: 0 8px 26px rgba(37, 39, 81, 0.025);
+    box-shadow: var(--shadow-card);
   }
   .sidebar-link {
     display: flex;
@@ -315,7 +427,7 @@
     min-height: 44px;
     padding: 10px 13px;
     border-radius: 10px;
-    color: #9295aa;
+    color: var(--c-nav);
     font-weight: 700;
     text-decoration: none;
     transition:
@@ -323,23 +435,47 @@
       color 0.2s ease,
       transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .sidebar-link:hover {
-    background: #f8f7ff;
-    color: var(--color-brand);
-    transform: translateX(3px);
+  @media (hover: hover) {
+    .sidebar-link:hover {
+      background: var(--c-surface-hover);
+      color: var(--c-brand);
+      transform: translateX(3px);
+    }
   }
   .sidebar-link:active {
     transform: translateX(1px) scale(0.98);
   }
   .sidebar-link.active {
-    background: var(--color-brand-soft);
-    color: var(--color-brand);
+    background: var(--c-brand-soft);
+    color: var(--c-brand);
   }
-  .sidebar-link-compact {
-    width: auto;
-    flex-shrink: 0;
-    font-size: 0.875rem;
+
+  /* Barra inferior do celular. */
+  .bottom-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 8px 4px;
+    border-radius: 12px;
+    color: var(--c-nav);
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   }
+  .bottom-link:active {
+    transform: scale(0.94);
+  }
+  .bottom-link.active {
+    background: var(--c-brand-soft);
+    color: var(--c-brand);
+  }
+
   .metric-icon {
     display: grid;
     place-items: center;
@@ -354,16 +490,46 @@
     width: 80px;
     height: 80px;
     border-radius: 22px;
-    background: #f2f0ff;
-    color: #7c6df6;
+    background: var(--c-brand-soft);
+    color: var(--c-brand);
   }
   .avatar-brand.MuiAvatar-root {
     width: 36px;
     height: 36px;
-    background: #ebe8ff;
-    color: var(--color-brand);
+    background: var(--c-brand-soft);
+    color: var(--c-brand);
     font-size: 15px;
     font-weight: 800;
+  }
+
+  /* Botão de tema: o sol e a lua trocam girando. */
+  .theme-icon {
+    position: absolute;
+    transition:
+      transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.35s ease;
+  }
+  .theme-icon-moon {
+    transform: rotate(-90deg) scale(0.4);
+    opacity: 0;
+  }
+  [data-theme="dark"] .theme-icon-sun {
+    transform: rotate(90deg) scale(0.4);
+    opacity: 0;
+  }
+  [data-theme="dark"] .theme-icon-moon {
+    transform: none;
+    opacity: 1;
+  }
+
+  /* Telas de toque: alvos maiores, como pedem as diretrizes de acessibilidade. */
+  @media (pointer: coarse) {
+    .MuiIconButton-sizeSmall {
+      padding: 10px;
+    }
+    .sidebar-link {
+      min-height: 48px;
+    }
   }
 }
 

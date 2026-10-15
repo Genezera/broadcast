@@ -24,7 +24,7 @@ export function MessageItem({
   const scheduled = message.status === "scheduled";
   return (
     <article
-      className="animate-item flex flex-col gap-4 p-5 transition-colors hover:bg-[#fcfcfe] sm:flex-row sm:items-start"
+      className="animate-item flex flex-col gap-4 p-5 transition-colors hover:bg-surface-muted sm:flex-row sm:items-start"
       style={{ ["--i" as string]: index }}
     >
       <span

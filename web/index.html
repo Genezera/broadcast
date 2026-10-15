@@ -2,8 +2,12 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <meta name="theme-color" content="#f7f8fb" />
+    <meta name="color-scheme" content="light dark" />
     <meta
       name="description"
       content="Broadcast: organize conexões, contatos e mensagens agendadas."
@@ -13,6 +17,25 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%236556eb'/%3E%3Cpath d='M9 18v-4l11-5v14L9 18z' fill='white'/%3E%3C/svg%3E"
     />
     <title>Broadcast — Comunicação simplificada</title>
+    <!--
+      Define o tema antes da primeira pintura (escolha salva ou tema do
+      sistema), para a página não "piscar" clara antes de ficar escura.
+    -->
+    <script>
+      try {
+        var saved = localStorage.getItem("broadcast:theme");
+        var dark =
+          saved === "dark" ||
+          (saved !== "light" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+        if (dark) {
+          document
+            .querySelector('meta[name="theme-color"]')
+            .setAttribute("content", "#0d0e1a");
+        }
+      } catch (error) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

@@ -56,7 +56,11 @@ export function ConnectionDialog({
 
   return (
     <Dialog open={!!target} onClose={onClose} maxWidth="xs" fullWidth>
-      <form onSubmit={submit} noValidate>
+      <form
+        onSubmit={submit}
+        noValidate
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <DialogTitle>{editing ? "Editar conexão" : "Nova conexão"}</DialogTitle>
         <DialogContent>
           <Typography color="text.secondary" fontSize={14} sx={{ mb: 3 }}>

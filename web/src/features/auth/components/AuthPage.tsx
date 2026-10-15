@@ -16,6 +16,7 @@ import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { BrandMark } from "../../../components/ui/BrandMark";
+import { ThemeToggle } from "../../../components/ui/ThemeToggle";
 import { FormTextField } from "../../../components/ui/FormTextField";
 import { getErrorMessage } from "../../../lib/errors";
 import { requestPasswordReset, signIn, signUp } from "../authService";
@@ -85,9 +86,12 @@ export function AuthPage() {
   };
 
   return (
-    <div className="grid min-h-screen bg-white lg:grid-cols-2">
+    <div className="grid min-h-screen bg-surface lg:grid-cols-2">
       <AuthHero />
-      <div className="flex items-center justify-center p-6 sm:p-12">
+      <div className="relative flex items-center justify-center p-6 sm:p-12">
+        <div className="animate-fade absolute right-4 top-4 sm:right-6 sm:top-6">
+          <ThemeToggle />
+        </div>
         <div
           className="stagger-children w-full max-w-[430px]"
           style={{

@@ -131,21 +131,21 @@ export function DashboardPage() {
         </Button>
       </div>
 
-      <div className="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-7 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {metrics.map((metric, index) => (
           <Link
             key={metric.label}
             to={metric.to}
-            className="surface animate-item hover-lift p-5 text-left"
+            className="surface animate-item hover-lift p-4 text-left sm:p-5"
             style={{ ["--i" as string]: index }}
           >
             <div className="flex items-start justify-between">
               <span className={`metric-icon ${metric.className}`}>
                 {metric.icon}
               </span>
-              <ArrowForwardIcon sx={{ fontSize: 17, color: "#b8bac8" }} />
+              <ArrowForwardIcon sx={{ fontSize: 17, color: "text.disabled" }} />
             </div>
-            <p className="mt-5 font-display text-3xl font-extrabold">
+            <p className="mt-4 font-display text-2xl font-extrabold sm:mt-5 sm:text-3xl">
               <AnimatedNumber value={metric.value} />
             </p>
             <p className="mt-1 text-sm text-muted">{metric.label}</p>
@@ -153,7 +153,7 @@ export function DashboardPage() {
         ))}
       </div>
 
-      <section className="surface p-6">
+      <section className="surface p-4 sm:p-6">
         <div className="mb-5 flex items-center justify-between">
           <div>
             <Typography variant="h6" component="h2">

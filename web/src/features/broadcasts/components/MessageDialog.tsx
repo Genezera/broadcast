@@ -15,6 +15,7 @@ import {
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import SendOutlinedIcon from "@mui/icons-material/SendOutlined";
 import { useNotify } from "../../../app/providers/NotificationProvider";
+import { useResponsiveDialog } from "../../../components/ui/useResponsiveDialog";
 import { FormTextField } from "../../../components/ui/FormTextField";
 import { toLocalInputValue } from "../../../lib/dates";
 import { getErrorMessage } from "../../../lib/errors";
@@ -61,6 +62,7 @@ export function MessageDialog({
   onClose,
 }: MessageDialogProps) {
   const notify = useNotify();
+  const responsiveDialog = useResponsiveDialog();
   const editing = target && target !== "new" ? target : null;
   const alreadySent = editing?.status === "sent";
 
@@ -117,8 +119,18 @@ export function MessageDialog({
         : "Enviar agora";
 
   return (
-    <Dialog open={!!target} onClose={onClose} maxWidth="sm" fullWidth>
-      <form onSubmit={submit} noValidate>
+    <Dialog
+      open={!!target}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      {...responsiveDialog}
+    >
+      <form
+        onSubmit={submit}
+        noValidate
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <DialogTitle>
           {editing ? "Editar mensagem" : "Nova mensagem"}
         </DialogTitle>

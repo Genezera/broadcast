@@ -138,6 +138,15 @@ export function BroadcastsPage() {
               size="small"
               value={filter}
               aria-label="Filtrar mensagens por status"
+              sx={{
+                width: { xs: "100%", sm: "auto" },
+                "& .MuiToggleButton-root": {
+                  flex: { xs: 1, sm: "none" },
+                  px: { xs: 0.5, sm: 2 },
+                  whiteSpace: "nowrap",
+                  fontSize: { xs: 12, sm: 14 },
+                },
+              }}
               onChange={(_, value: Filter | null) => value && setFilter(value)}
             >
               <ToggleButton value="all">

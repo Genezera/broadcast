@@ -25,7 +25,7 @@ export function ConnectionCard({
   const deleting = connection.status === "deleting";
   return (
     <article
-      className="animate-item hover-lift rounded-xl border border-line bg-white p-5 hover:border-[#cdc7ff]"
+      className="animate-item hover-lift rounded-xl border border-line bg-surface p-5 hover:border-brand/40"
       style={{ ["--i" as string]: index }}
     >
       <div className="flex items-start justify-between">

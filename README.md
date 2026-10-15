@@ -4,6 +4,9 @@ Aplicação SaaS multi-tenant simplificada para organizar **conexões**, **conta
 
 - **Frontend:** React 19 + TypeScript + Vite, Material UI + Tailwind CSS, React Router, React Hook Form + Zod.
 - **Backend:** Firebase Authentication, Firestore, Cloud Functions v2 (Node 22) e Cloud Scheduler.
+- **Responsivo:** celular (barra de navegação inferior, listas em cards, formulários em tela cheia), tablet (menu lateral compacto só com ícones) e desktop (menu completo).
+- **Modo escuro:** botão no cabeçalho e na tela de login; segue o tema do sistema na primeira visita, lembra a escolha e troca com uma revelação circular animada.
+- **Telefone:** campo com seletor de país (bandeira + DDI) e máscara aplicada enquanto digita; o valor é salvo no formato internacional.
 - **Interface:** abertura com splash e painel que abre para a direita, transições de página, entrada escalonada de listas, microinterações em botões e cards, diálogos com _grow_, skeletons de carregamento e barra de progresso na navegação. Tudo respeita `prefers-reduced-motion`.
 - **Paradigma:** funcional — funções puras, hooks e componentes pequenos; sem classes próprias.
 

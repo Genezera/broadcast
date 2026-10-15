@@ -1,4 +1,5 @@
 import { Checkbox, FormHelperText } from "@mui/material";
+import { displayPhone } from "../../../lib/phone";
 import type { Recipient } from "../../../types";
 
 type RecipientPickerProps = {
@@ -46,7 +47,7 @@ export function RecipientPicker({
         )}
       </div>
       <div
-        className={`max-h-44 overflow-y-auto rounded-xl border ${error ? "border-red-400" : "border-[#e6e8ef]"}`}
+        className={`max-h-44 overflow-y-auto rounded-xl border ${error ? "border-red-400" : "border-line-strong"}`}
       >
         {choices.length === 0 ? (
           <p className="p-4 text-sm text-muted">
@@ -56,7 +57,7 @@ export function RecipientPicker({
           choices.map((choice) => (
             <label
               key={choice.id}
-              className="flex cursor-pointer items-center gap-2 border-b border-[#f0f1f5] px-3 py-2 last:border-b-0 hover:bg-[#faf9ff]"
+              className="flex cursor-pointer items-center gap-2 border-b border-line px-3 py-2 last:border-b-0 hover:bg-surface-hover"
             >
               <Checkbox
                 size="small"
@@ -67,7 +68,9 @@ export function RecipientPicker({
                 {choice.name}
                 {removedIds.has(choice.id) && " (removido)"}
               </span>
-              <span className="text-xs text-muted">{choice.phone}</span>
+              <span className="text-xs text-muted">
+                {displayPhone(choice.phone)}
+              </span>
             </label>
           ))
         )}

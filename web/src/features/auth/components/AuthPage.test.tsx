@@ -11,7 +11,16 @@ vi.mock("../authService", () => ({
 }));
 
 import { requestPasswordReset, signIn, signUp } from "../authService";
+import { ThemeModeProvider } from "../../../app/providers/ThemeModeProvider";
 import { AuthPage } from "./AuthPage";
+
+// A tela inclui o botão de tema, que depende do provider.
+const renderPage = () =>
+  render(
+    <ThemeModeProvider>
+      <AuthPage />
+    </ThemeModeProvider>,
+  );
 
 beforeEach(() => vi.clearAllMocks());
 afterEach(cleanup);
@@ -21,7 +30,7 @@ const password = () => screen.getByLabelText("Senha");
 
 describe("AuthPage", () => {
   it("validates the fields before calling Firebase", async () => {
-    render(<AuthPage />);
+    renderPage();
     await userEvent.click(screen.getByRole("button", { name: "Entrar" }));
     expect(await screen.findByText("Informe o e-mail.")).toBeTruthy();
     expect(screen.getByText("Informe a senha.")).toBeTruthy();
@@ -29,7 +38,7 @@ describe("AuthPage", () => {
   });
 
   it("signs in with the typed credentials", async () => {
-    render(<AuthPage />);
+    renderPage();
     await userEvent.type(email(), "ana@exemplo.com");
     await userEvent.type(password(), "segredo123");
     await userEvent.click(screen.getByRole("button", { name: "Entrar" }));
@@ -39,7 +48,7 @@ describe("AuthPage", () => {
   });
 
   it("requires six characters only when registering", async () => {
-    render(<AuthPage />);
+    renderPage();
     await userEvent.click(screen.getByRole("button", { name: "Cadastre-se" }));
     await userEvent.type(email(), "ana@exemplo.com");
     await userEvent.type(password(), "123");
@@ -51,7 +60,7 @@ describe("AuthPage", () => {
   });
 
   it("sends the password reset link without revealing if the account exists", async () => {
-    render(<AuthPage />);
+    renderPage();
     await userEvent.click(screen.getByText("Esqueci minha senha"));
     expect(await screen.findByText("Informe o e-mail.")).toBeTruthy();
     expect(requestPasswordReset).not.toHaveBeenCalled();
