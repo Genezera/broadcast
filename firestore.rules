@@ -1,0 +1,107 @@
+rules_version = '2';
+
+// Modelo multi-tenant com coleções planas: todo documento carrega `tenantId`
+// (o uid do Firebase Authentication do dono). As regras negam por padrão e as
+// consultas do cliente precisam filtrar por `tenantId` para serem autorizadas.
+// Mensagens só são gravadas por Cloud Functions (Admin SDK).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Regra central do multi-tenant: o documento só é acessível ao usuário
+    // cujo uid é o tenantId gravado nele.
+    function owns(data) {
+      return signedIn() && data.tenantId == request.auth.uid;
+    }
+
+    function validName(value) {
+      return value is string && value.size() > 0 && value.size() <= 100
+        && value.matches('.*\\S.*');
+    }
+
+    function validPhone(value) {
+      return value is string && value.matches('^\\+?[0-9 ()-]{8,24}$');
+    }
+
+    // Garante a integridade do relacionamento: um contato só pode apontar para
+    // uma conexão que existe, é do mesmo cliente e não está sendo excluída.
+    // Custa leituras extras por escrita, mas evita contato "órfão" ou de outro tenant.
+    function connectionIsActive(connectionId) {
+      let path = /databases/$(database)/documents/connections/$(connectionId);
+      return exists(path)
+        && owns(get(path).data)
+        && get(path).data.status == 'active';
+    }
+
+    // Perfil do cliente: o ID do documento é o uid.
+    match /tenants/{tenantId} {
+      allow get: if signedIn() && request.auth.uid == tenantId;
+      allow create: if signedIn() && request.auth.uid == tenantId
+        && request.resource.data.keys().hasOnly(['email', 'createdAt', 'updatedAt'])
+        && request.resource.data.email is string
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update, delete: if false;
+    }
+
+    match /connections/{id} {
+      // As rules não filtram: a consulta do cliente precisa trazer
+      // where('tenantId', '==', uid), senão o Firestore recusa a query toda.
+      allow get, list: if owns(resource.data);
+
+      // hasOnly impede campos extras; createdAt/updatedAt == request.time
+      // obriga a usar o horário do servidor (cliente não falsifica a data).
+      allow create: if owns(request.resource.data)
+        && request.resource.data.keys().hasOnly(['tenantId', 'name', 'status', 'createdAt', 'updatedAt'])
+        && request.resource.data.status == 'active'
+        && validName(request.resource.data.name)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      // O cliente só consegue alterar o nome: `tenantId` e `status` ficam
+      // travados (affectedKeys).
+      allow update: if owns(resource.data)
+        && resource.data.status == 'active'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'updatedAt'])
+        && validName(request.resource.data.name)
+        && request.resource.data.updatedAt == request.time;
+
+      // Excluir passa pela function deleteConnection, que também limpa os
+      // contatos e mensagens da conexão.
+      allow delete: if false;
+    }
+
+    match /contacts/{id} {
+      allow get, list: if owns(resource.data);
+
+      allow create: if owns(request.resource.data)
+        && request.resource.data.keys().hasOnly(['tenantId', 'connectionId', 'name', 'phone', 'createdAt', 'updatedAt'])
+        && connectionIsActive(request.resource.data.connectionId)
+        && validName(request.resource.data.name)
+        && validPhone(request.resource.data.phone)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      // `tenantId` e `connectionId` são imutáveis.
+      allow update: if owns(resource.data)
+        && connectionIsActive(resource.data.connectionId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'updatedAt'])
+        && validName(request.resource.data.name)
+        && validPhone(request.resource.data.phone)
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if owns(resource.data)
+        && connectionIsActive(resource.data.connectionId);
+    }
+
+    // Mensagens: o cliente só lê. Criar, editar e excluir são feitos pelas
+    // functions, que validam contatos, conexão e horário antes de gravar.
+    match /messages/{id} {
+      allow get, list: if owns(resource.data);
+      allow write: if false;
+    }
+  }
+}
