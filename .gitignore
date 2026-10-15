@@ -1,0 +1,24 @@
+# Dependências e builds
+node_modules/
+/web/dist/
+/functions/lib/
+*.tsbuildinfo
+
+# Variáveis de ambiente (use web/.env.example como modelo)
+.env
+.env.*
+!.env.example
+
+# Firebase
+.firebase/
+*-debug.log
+firebase-debug.log
+firestore-debug.log
+pubsub-debug.log
+ui-debug.log
+
+# Editor e ferramentas locais
+.claude/
+.vscode/
+.idea/
+.DS_Store
