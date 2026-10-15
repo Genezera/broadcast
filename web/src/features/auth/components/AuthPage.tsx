@@ -77,7 +77,7 @@ export function AuthPage() {
       await requestPasswordReset(parsed.data);
       // Mensagem neutra: não revelo se o e-mail tem conta ou não.
       setInfo(
-        "Se o e-mail estiver cadastrado, enviaremos um link para redefinir a senha.",
+        "Se o e-mail estiver cadastrado, enviamos um link para redefinir a senha. Confira também a caixa de spam.",
       );
     } catch (cause) {
       setError(getErrorMessage(cause));
