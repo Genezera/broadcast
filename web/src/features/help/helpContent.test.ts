@@ -1,23 +1,30 @@
 import { describe, expect, it } from "vitest";
+import { LANGS } from "../../i18n/translate";
 import {
   FAQ,
   getNode,
-  HELP_NODES,
   ROOT_ID,
+  TOPIC_IDS,
   topicForSection,
 } from "./helpContent";
 
-describe("help content graph", () => {
-  const nodes = Object.values(HELP_NODES);
+describe.each(LANGS)("help content (%s)", (lang) => {
+  const nodes = TOPIC_IDS.map((id) => getNode(lang, id)!);
 
   it("has a root topic", () => {
-    expect(getNode(ROOT_ID)).toBeDefined();
+    expect(getNode(lang, ROOT_ID)).toBeDefined();
+  });
+
+  it("has text for every topic", () => {
+    for (const id of TOPIC_IDS) {
+      expect(getNode(lang, id)?.label, id).toBeTruthy();
+    }
   });
 
   it("never points a button to a topic that does not exist", () => {
     for (const node of nodes) {
       for (const id of node.next) {
-        expect(getNode(id), `${node.id} -> ${id}`).toBeDefined();
+        expect(getNode(lang, id), `${node.id} -> ${id}`).toBeDefined();
       }
     }
   });
@@ -26,14 +33,14 @@ describe("help content graph", () => {
     const seen = new Set<string>([ROOT_ID]);
     const queue = [ROOT_ID];
     while (queue.length) {
-      for (const id of getNode(queue.shift()!)!.next) {
+      for (const id of getNode(lang, queue.shift()!)!.next) {
         if (!seen.has(id)) {
           seen.add(id);
           queue.push(id);
         }
       }
     }
-    expect([...seen].sort()).toEqual(nodes.map((node) => node.id).sort());
+    expect([...seen].sort()).toEqual([...TOPIC_IDS].sort());
   });
 
   it("gives every topic either an answer or follow-up buttons", () => {
@@ -58,15 +65,32 @@ describe("help content graph", () => {
       "broadcasts",
       "profile",
     ] as const) {
-      expect(getNode(topicForSection(section)!)).toBeDefined();
+      expect(getNode(lang, topicForSection(section)!)).toBeDefined();
     }
   });
 
   it("has FAQ entries with question and answer", () => {
-    expect(FAQ.length).toBeGreaterThan(5);
-    for (const item of FAQ) {
+    expect(FAQ[lang].length).toBeGreaterThan(5);
+    for (const item of FAQ[lang]) {
       expect(item.question.endsWith("?")).toBe(true);
       expect(item.answer.length).toBeGreaterThan(20);
+    }
+  });
+});
+
+describe("help content parity", () => {
+  it("has the same number of FAQ entries in every language", () => {
+    expect(FAQ.en).toHaveLength(FAQ.pt.length);
+  });
+
+  it("keeps the same structure (steps, tips, actions) in every language", () => {
+    for (const id of TOPIC_IDS) {
+      const pt = getNode("pt", id)!;
+      const en = getNode("en", id)!;
+      expect(en.steps?.length, id).toBe(pt.steps?.length);
+      expect(en.tips?.length, id).toBe(pt.tips?.length);
+      expect(en.action?.to, id).toBe(pt.action?.to);
+      expect(!!en.intro, id).toBe(!!pt.intro);
     }
   });
 });

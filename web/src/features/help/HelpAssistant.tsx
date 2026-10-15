@@ -21,6 +21,7 @@ import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import { sectionFromPath } from "../../components/layout/navigation";
+import { useI18n } from "../../i18n/I18nProvider";
 import {
   FAQ,
   getNode,
@@ -30,14 +31,19 @@ import {
 } from "./helpContent";
 
 type Option = { id: string; label: string; highlight?: boolean };
+
+/**
+ * A conversa guarda só ids de tópicos, nunca o texto. Assim ela é montada na
+ * hora no idioma atual e acompanha a troca de idioma sem recomeçar.
+ */
 type Entry =
-  | { id: number; from: "user"; text: string }
+  | { id: number; from: "user"; topic: string }
   | {
       id: number;
       from: "bot";
-      node: HelpNode;
-      intro?: string;
-      options: Option[];
+      topic: string;
+      /** Primeira mensagem: guarda o assunto da tela em que a ajuda abriu. */
+      greeting?: { contextTopic: string | null };
     };
 
 /** Tempo do "digitando..." antes de cada resposta (zero sem animações). */
@@ -52,49 +58,21 @@ const prefersReducedMotion = () => {
   }
 };
 
-const optionsFor = (node: HelpNode): Option[] => {
-  const options = node.next.flatMap((id) => {
-    const target = getNode(id);
-    return target ? [{ id, label: target.label }] : [];
-  });
-  return node.id === ROOT_ID
-    ? options
-    : [...options, { id: ROOT_ID, label: "Menu principal" }];
-};
-
 let entryId = 0;
 const nextId = () => ++entryId;
 
-/** Primeira mensagem: oferece, em destaque, o assunto da tela atual. */
-const greeting = (contextTopic: string | null): Entry => {
-  const root = getNode(ROOT_ID)!;
-  const context = contextTopic ? getNode(contextTopic) : undefined;
-  const options = optionsFor(root);
-  return {
-    id: nextId(),
-    from: "bot",
-    node: { ...root, intro: undefined },
-    intro:
-      "Olá! Eu sou o assistente do Broadcast. É só tocar nos botões, não precisa digitar.",
-    options: context
-      ? [
-          {
-            id: context.id,
-            label: `Esta tela: ${context.label}`,
-            highlight: true,
-          },
-          ...options.filter((option) => option.id !== context.id),
-        ]
-      : options,
-  };
-};
+const greetingEntry = (contextTopic: string | null): Entry => ({
+  id: nextId(),
+  from: "bot",
+  topic: ROOT_ID,
+  greeting: { contextTopic },
+});
 
-function BotBubble({ entry }: { entry: Extract<Entry, { from: "bot" }> }) {
-  const { node } = entry;
-  const intro = entry.intro ?? node.intro;
+function BotBubble({ node, intro }: { node: HelpNode; intro?: string }) {
+  const text = intro ?? node.intro;
   return (
     <div className="animate-pop max-w-[92%] rounded-2xl rounded-tl-md bg-surface-muted px-4 py-3 text-sm leading-relaxed">
-      {intro && <p className="font-semibold">{intro}</p>}
+      {text && <p className="font-semibold">{text}</p>}
       {node.steps && (
         <ol className="mt-2 space-y-2">
           {node.steps.map((step, index) => (
@@ -120,12 +98,12 @@ function BotBubble({ entry }: { entry: Extract<Entry, { from: "bot" }> }) {
   );
 }
 
-function TypingBubble() {
+function TypingBubble({ label }: { label: string }) {
   return (
     <div
       className="animate-pop flex w-fit gap-1.5 rounded-2xl rounded-tl-md bg-surface-muted px-4 py-3.5"
       role="status"
-      aria-label="Assistente digitando"
+      aria-label={label}
     >
       {[0, 1, 2].map((dot) => (
         <span
@@ -139,6 +117,7 @@ function TypingBubble() {
 }
 
 export function HelpAssistant() {
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isPhone = useMediaQuery("(max-width: 599px)");
@@ -165,10 +144,35 @@ export function HelpAssistant() {
     bottom.current?.scrollIntoView?.({ behavior: "smooth", block: "end" });
   }, [entries, typing, open, tab]);
 
+  const optionsFor = (node: HelpNode): Option[] => {
+    const options = node.next.flatMap((id) => {
+      const target = getNode(lang, id);
+      return target ? [{ id, label: target.label }] : [];
+    });
+    return node.id === ROOT_ID
+      ? options
+      : [...options, { id: ROOT_ID, label: t("help.mainMenu") }];
+  };
+
+  /** Botões da primeira mensagem, com o assunto da tela em destaque. */
+  const greetingOptions = (node: HelpNode, context: string | null) => {
+    const options = optionsFor(node);
+    const target = context ? getNode(lang, context) : undefined;
+    if (!target) return options;
+    return [
+      {
+        id: target.id,
+        label: t("help.thisScreen", { topic: target.label }),
+        highlight: true,
+      },
+      ...options.filter((option) => option.id !== target.id),
+    ];
+  };
+
   const reset = () => {
     clearTimeout(timer.current);
     setTyping(false);
-    setEntries([greeting(contextTopic)]);
+    setEntries([greetingEntry(contextTopic)]);
   };
 
   const openPanel = () => {
@@ -182,27 +186,21 @@ export function HelpAssistant() {
       }
     }
     // A primeira abertura cria a conversa já com o assunto da tela atual.
-    if (entries.length === 0) setEntries([greeting(contextTopic)]);
+    if (entries.length === 0) setEntries([greetingEntry(contextTopic)]);
   };
 
   const pick = (option: Option) => {
-    const node = getNode(option.id);
-    if (!node || typing) return;
-    const label = option.highlight
-      ? node.label
-      : option.id === ROOT_ID
-        ? "Menu principal"
-        : option.label;
+    if (!getNode(lang, option.id) || typing) return;
     setEntries((current) => [
       ...current,
-      { id: nextId(), from: "user", text: label },
+      { id: nextId(), from: "user", topic: option.id },
     ]);
     setTyping(true);
     timer.current = setTimeout(
       () => {
         setEntries((current) => [
           ...current,
-          { id: nextId(), from: "bot", node, options: optionsFor(node) },
+          { id: nextId(), from: "bot", topic: option.id },
         ]);
         setTyping(false);
       },
@@ -215,11 +213,11 @@ export function HelpAssistant() {
   return (
     <>
       {!open && (
-        <Tooltip title="Precisa de ajuda?" placement="left">
+        <Tooltip title={t("help.fabTooltip")} placement="left">
           <Fab
             color="primary"
             variant="extended"
-            aria-label="Abrir ajuda"
+            aria-label={t("help.open")}
             onClick={openPanel}
             className={`animate-pop ${seen ? "" : "help-ring"}`}
             sx={{
@@ -233,7 +231,7 @@ export function HelpAssistant() {
             }}
           >
             <HelpOutlineIcon />
-            <span className="hidden sm:inline">Ajuda</span>
+            <span className="hidden sm:inline">{t("help.fab")}</span>
           </Fab>
         </Tooltip>
       )}
@@ -244,7 +242,7 @@ export function HelpAssistant() {
         onClose={() => setOpen(false)}
         slotProps={{
           paper: {
-            "aria-label": "Assistente de ajuda",
+            "aria-label": t("help.panelTitle"),
             sx: {
               width: { xs: "100%", sm: 420 },
               height: { xs: "88vh", sm: "100%" },
@@ -262,14 +260,16 @@ export function HelpAssistant() {
             <SmartToyOutlinedIcon />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="font-display font-extrabold">Assistente de ajuda</p>
-            <p className="text-xs text-muted">Respostas rápidas por botões</p>
+            <p className="font-display font-extrabold">
+              {t("help.panelTitle")}
+            </p>
+            <p className="text-xs text-muted">{t("help.panelSubtitle")}</p>
           </div>
           {tab === "bot" && (
-            <Tooltip title="Recomeçar conversa">
+            <Tooltip title={t("help.restart")}>
               <IconButton
                 size="small"
-                aria-label="Recomeçar conversa"
+                aria-label={t("help.restart")}
                 onClick={reset}
               >
                 <RestartAltIcon fontSize="small" />
@@ -278,7 +278,7 @@ export function HelpAssistant() {
           )}
           <IconButton
             size="small"
-            aria-label="Fechar ajuda"
+            aria-label={t("help.close")}
             onClick={() => setOpen(false)}
           >
             <CloseIcon fontSize="small" />
@@ -291,66 +291,88 @@ export function HelpAssistant() {
           variant="fullWidth"
           sx={{ borderBottom: 1, borderColor: "divider", minHeight: 44 }}
         >
-          <Tab value="bot" label="Assistente" sx={{ minHeight: 44 }} />
           <Tab
-            value="faq"
-            label="Perguntas frequentes"
+            value="bot"
+            label={t("help.tabAssistant")}
             sx={{ minHeight: 44 }}
           />
+          <Tab value="faq" label={t("help.tabFaq")} sx={{ minHeight: 44 }} />
         </Tabs>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
           {tab === "bot" ? (
             <div className="flex flex-col gap-3">
-              {entries.map((entry) =>
-                entry.from === "user" ? (
-                  <div
-                    key={entry.id}
-                    className="animate-pop ml-auto max-w-[85%] rounded-2xl rounded-tr-md bg-brand px-4 py-2.5 text-sm font-semibold text-white"
-                  >
-                    {entry.text}
-                  </div>
-                ) : (
+              {entries.map((entry) => {
+                const node = getNode(lang, entry.topic);
+                if (!node) return null;
+                if (entry.from === "user") {
+                  return (
+                    <div
+                      key={entry.id}
+                      className="animate-pop ml-auto max-w-[85%] rounded-2xl rounded-tr-md bg-brand px-4 py-2.5 text-sm font-semibold text-white"
+                    >
+                      {node.label}
+                    </div>
+                  );
+                }
+                return (
                   <div key={entry.id} className="flex flex-col gap-2">
-                    <BotBubble entry={entry} />
-                    {entry.node.action && entry === lastBot && (
+                    <BotBubble
+                      node={
+                        entry.greeting ? { ...node, intro: undefined } : node
+                      }
+                      intro={entry.greeting ? t("help.greeting") : undefined}
+                    />
+                    {node.action && entry === lastBot && (
                       <Button
                         variant="outlined"
                         size="small"
                         sx={{ alignSelf: "flex-start" }}
                         onClick={() => {
                           setOpen(false);
-                          navigate(entry.node.action!.to);
+                          navigate(node.action!.to);
                         }}
                       >
-                        {entry.node.action.label}
+                        {node.action.label}
                       </Button>
                     )}
                   </div>
-                ),
-              )}
-              {typing && <TypingBubble />}
-              {!typing && lastBot && lastBot.from === "bot" && (
-                <div className="mt-1 flex flex-wrap gap-2" aria-label="Opções">
-                  {lastBot.options.map((option, index) => (
-                    <Chip
-                      key={option.id}
-                      label={option.label}
-                      color={option.highlight ? "primary" : "default"}
-                      variant={option.highlight ? "filled" : "outlined"}
-                      onClick={() => pick(option)}
-                      className="animate-item"
-                      style={{ ["--i" as string]: index }}
-                      sx={{ height: 34, fontSize: 13 }}
-                    />
-                  ))}
-                </div>
-              )}
+                );
+              })}
+              {typing && <TypingBubble label={t("help.typing")} />}
+              {!typing &&
+                lastBot &&
+                (() => {
+                  const node = getNode(lang, lastBot.topic);
+                  if (!node) return null;
+                  const options = lastBot.greeting
+                    ? greetingOptions(node, lastBot.greeting.contextTopic)
+                    : optionsFor(node);
+                  return (
+                    <div
+                      className="mt-1 flex flex-wrap gap-2"
+                      aria-label={t("help.options")}
+                    >
+                      {options.map((option, index) => (
+                        <Chip
+                          key={option.id}
+                          label={option.label}
+                          color={option.highlight ? "primary" : "default"}
+                          variant={option.highlight ? "filled" : "outlined"}
+                          onClick={() => pick(option)}
+                          className="animate-item"
+                          style={{ ["--i" as string]: index }}
+                          sx={{ height: 34, fontSize: 13 }}
+                        />
+                      ))}
+                    </div>
+                  );
+                })()}
               <div ref={bottom} />
             </div>
           ) : (
             <div className="animate-fade">
-              {FAQ.map((item) => (
+              {FAQ[lang].map((item) => (
                 <Accordion
                   key={item.question}
                   disableGutters

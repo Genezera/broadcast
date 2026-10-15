@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
+import { I18nProvider } from "../../i18n/I18nProvider";
 import { HelpAssistant } from "./HelpAssistant";
 
 afterEach(() => {
@@ -86,5 +87,31 @@ describe("HelpAssistant", () => {
     ).toBeTruthy();
     await userEvent.click(screen.getByText("O envio de mensagens é real?"));
     expect(await screen.findByText(/apenas uma simulação/)).toBeTruthy();
+  });
+
+  it("answers in English when that is the chosen language", async () => {
+    localStorage.setItem("broadcast:lang", "en");
+    render(
+      <I18nProvider>
+        <MemoryRouter initialEntries={["/connections/abc/contacts"]}>
+          <HelpAssistant />
+        </MemoryRouter>
+      </I18nProvider>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Open help" }));
+    expect(await screen.findByText(/I.m the Broadcast assistant/)).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "This screen: Contacts" }),
+    ).toBeTruthy();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Schedule a message" }),
+    );
+    expect(
+      await screen.findByText(
+        /Enter a future date and time/,
+        {},
+        { timeout: 3000 },
+      ),
+    ).toBeTruthy();
   });
 });
