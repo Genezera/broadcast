@@ -1,0 +1,381 @@
+/* Ordem das camadas: precisa bater com a declaração feita em app/App.tsx. */
+@layer theme, base, mui, components, utilities;
+@import "tailwindcss";
+
+/* Tokens do design: viram classes (text-brand, bg-success-soft, border-line...). */
+@theme {
+  --font-display: "Manrope", sans-serif;
+  --color-brand: #6556eb;
+  --color-brand-soft: #f0eeff;
+  --color-ink: #34354f;
+  --color-muted: #9da0b1;
+  --color-line: #edf0f5;
+  --color-success: #229e87;
+  --color-success-soft: #eafaf6;
+  --color-info: #5989f5;
+  --color-info-soft: #ebf1ff;
+  --color-warning: #b67a2b;
+  --color-warning-soft: #fff4e7;
+}
+
+/* Animações. Todas respeitam prefers-reduced-motion (ver bloco no fim). */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-26px) scale(1.04);
+  }
+}
+@keyframes splash-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 8px 20px #6556eb40;
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 12px 32px #6556eb66;
+  }
+}
+@keyframes progress-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes splash-wipe {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes splash-logo-out {
+  to {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+@keyframes splash-bar {
+  0% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(260%);
+  }
+}
+
+@layer base {
+  :root {
+    font-family: "DM Sans", sans-serif;
+    font-synthesis: none;
+  }
+  body {
+    margin: 0;
+    min-width: 320px;
+  }
+}
+
+@layer components {
+  /* Entrada de página (troca de rota). */
+  .animate-page {
+    animation: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  /* Entrada de itens de lista/grade. O atraso escalonado vem de --i. */
+  .animate-item {
+    animation: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: calc(min(var(--i, 0), 8) * 55ms);
+  }
+  .animate-row {
+    animation: fade-in 0.4s ease-out backwards;
+    animation-delay: calc(min(var(--i, 0), 10) * 30ms);
+  }
+  /* Entrada em sequência dos filhos diretos (abertura do site / login). */
+  .stagger-children > * {
+    animation: fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: calc(var(--base, 0ms) + var(--step, 160ms) * var(--n, 0));
+  }
+  .stagger-children > :nth-child(1) {
+    --n: 0;
+  }
+  .stagger-children > :nth-child(2) {
+    --n: 1;
+  }
+  .stagger-children > :nth-child(3) {
+    --n: 2;
+  }
+  .stagger-children > :nth-child(4) {
+    --n: 3;
+  }
+  .stagger-children > :nth-child(5) {
+    --n: 4;
+  }
+  .stagger-children > :nth-child(6) {
+    --n: 5;
+  }
+
+  .animate-slide-in {
+    animation: slide-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.2s backwards;
+  }
+  .animate-drop-in {
+    animation: drop-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.35s backwards;
+  }
+
+  /* Abertura do site (SplashScreen). */
+  .splash {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: #211d49;
+  }
+  .splash-glow {
+    position: absolute;
+    width: 620px;
+    height: 620px;
+    border-radius: 9999px;
+    background: var(--color-brand);
+    opacity: 0.28;
+    filter: blur(130px);
+    animation: float 10s ease-in-out infinite;
+  }
+  .splash-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .splash-logo {
+    animation:
+      pop-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards,
+      splash-pulse 1.8s ease-in-out 0.9s infinite;
+  }
+  .splash-name {
+    animation: fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.25s backwards;
+  }
+  .splash-loader {
+    position: relative;
+    width: 150px;
+    height: 3px;
+    margin-top: 14px;
+    overflow: hidden;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.14);
+    animation: fade-in 0.8s ease-out 0.5s backwards;
+  }
+  .splash-loader-bar {
+    width: 40%;
+    height: 100%;
+    border-radius: 9999px;
+    background: #a99fff;
+    animation: splash-bar 1.3s ease-in-out infinite;
+  }
+
+  /* Saída: 1) o carregamento some, 2) a marca cresce e esmaece,
+     3) o painel roxo abre para a direita revelando a tela. */
+  .splash-leaving {
+    pointer-events: none;
+    box-shadow: -60px 0 90px rgba(21, 18, 48, 0.45);
+    animation: splash-wipe 0.95s cubic-bezier(0.76, 0, 0.24, 1) 0.55s forwards;
+  }
+  .splash-leaving .splash-loader {
+    animation: fade-out 0.3s ease-out forwards;
+  }
+  .splash-leaving .splash-logo {
+    animation: splash-logo-out 0.55s cubic-bezier(0.4, 0, 1, 1) 0.1s forwards;
+  }
+  .splash-leaving .splash-name {
+    animation: fade-out 0.4s ease-out 0.05s forwards;
+  }
+  .splash-leaving .splash-glow {
+    animation: fade-out 0.5s ease-out forwards;
+  }
+
+  .animate-fade {
+    animation: fade-in 0.6s ease-out backwards;
+  }
+  .animate-pop {
+    animation: pop-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  .animate-float {
+    animation: float 14s ease-in-out infinite;
+  }
+
+  /* Cards: sobem de leve ao passar o mouse. */
+  .hover-lift {
+    transition:
+      transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.25s ease,
+      border-color 0.25s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 34px rgba(37, 39, 81, 0.09);
+  }
+  .hover-lift:active {
+    transform: translateY(-1px) scale(0.995);
+  }
+
+  .nav-progress {
+    animation: progress-slide 1.1s ease-in-out infinite;
+  }
+  .brand-mark {
+    display: grid;
+    place-items: center;
+    width: 39px;
+    height: 39px;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #7c6df6, #5343d6);
+    color: white;
+    box-shadow: 0 8px 20px #6556eb40;
+  }
+  .brand-mark-sm {
+    width: 36px;
+    height: 36px;
+  }
+  .surface {
+    background: #fff;
+    border: 1px solid #ebedf4;
+    border-radius: 17px;
+    box-shadow: 0 8px 26px rgba(37, 39, 81, 0.025);
+  }
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 13px;
+    border-radius: 10px;
+    color: #9295aa;
+    font-weight: 700;
+    text-decoration: none;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .sidebar-link:hover {
+    background: #f8f7ff;
+    color: var(--color-brand);
+    transform: translateX(3px);
+  }
+  .sidebar-link:active {
+    transform: translateX(1px) scale(0.98);
+  }
+  .sidebar-link.active {
+    background: var(--color-brand-soft);
+    color: var(--color-brand);
+  }
+  .sidebar-link-compact {
+    width: auto;
+    flex-shrink: 0;
+    font-size: 0.875rem;
+  }
+  .metric-icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+  .empty-art {
+    animation: bob 4.5s ease-in-out infinite;
+    display: grid;
+    place-items: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 22px;
+    background: #f2f0ff;
+    color: #7c6df6;
+  }
+  .avatar-brand.MuiAvatar-root {
+    width: 36px;
+    height: 36px;
+    background: #ebe8ff;
+    color: var(--color-brand);
+    font-size: 15px;
+    font-weight: 800;
+  }
+}
+
+/* Quem pede para reduzir movimento no sistema não vê animações. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
