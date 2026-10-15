@@ -6,6 +6,8 @@ const AUTH_MESSAGES: Record<string, string> = {
   "auth/weak-password": "A senha deve ter pelo menos 6 caracteres.",
   "auth/invalid-credential": "E-mail ou senha incorretos.",
   "auth/user-disabled": "Esta conta foi desativada.",
+  "auth/requires-recent-login":
+    "Por segurança, saia e entre novamente para fazer esta alteração.",
   "auth/too-many-requests":
     "Muitas tentativas. Aguarde alguns instantes e tente novamente.",
   "auth/network-request-failed": "Sem conexão com a internet.",

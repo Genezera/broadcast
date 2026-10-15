@@ -38,8 +38,12 @@ export const NAV_ITEMS: NavItem[] = [
   },
 ];
 
+/** Seções do menu + a página de perfil, que não tem item no menu. */
+export type Section = NavItem["id"] | "profile";
+
 /** Identifica a seção do menu a partir da URL (inclusive rotas aninhadas). */
-export const sectionFromPath = (pathname: string): NavItem["id"] => {
+export const sectionFromPath = (pathname: string): Section => {
+  if (pathname.startsWith("/profile")) return "profile";
   if (pathname.endsWith("/contacts")) return "contacts";
   if (pathname.endsWith("/broadcasts")) return "broadcasts";
   if (pathname.startsWith("/connections")) return "connections";

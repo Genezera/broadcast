@@ -13,6 +13,7 @@ import {
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { BrandMark } from "../../../components/ui/BrandMark";
@@ -43,16 +44,16 @@ export function AuthPage() {
   } = useForm<AuthFormValues>({
     // O schema muda entre login e cadastro (a regra de senha é diferente).
     resolver: zodResolver(registering ? signUpSchema : signInSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { name: "", email: "", password: "" },
   });
 
   // Em login e cadastro o erro vem do Firebase (senha errada, e-mail em uso...).
   // getErrorMessage traduz o código para algo que o usuário entende.
-  const submit = handleSubmit(async ({ email, password }) => {
+  const submit = handleSubmit(async ({ name, email, password }) => {
     setError("");
     setInfo("");
     try {
-      if (registering) await signUp(email, password);
+      if (registering) await signUp(email, password, name);
       else await signIn(email, password);
     } catch (cause) {
       setError(getErrorMessage(cause));
@@ -126,6 +127,24 @@ export function AuthPage() {
               ["--step" as string]: "150ms",
             }}
           >
+            {registering && (
+              <FormTextField
+                control={control}
+                name="name"
+                label="Nome"
+                fullWidth
+                autoComplete="name"
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PersonOutlineIcon fontSize="small" color="disabled" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            )}
             <FormTextField
               control={control}
               name="email"

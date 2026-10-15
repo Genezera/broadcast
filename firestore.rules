@@ -36,15 +36,40 @@ service cloud.firestore {
         && get(path).data.status == 'active';
     }
 
+    // Nome do perfil: opcional (contas antigas não têm), mas se existir precisa ser válido.
+    function validProfileName(data) {
+      return !('name' in data) || (data.name is string && data.name.size() >= 2
+        && data.name.size() <= 60 && data.name.matches('.*\\S.*'));
+    }
+
+    // Foto: ausente/nula, ou um data URL de imagem pequeno. O limite protege
+    // o documento (o cliente reduz a foto para 256px antes de enviar).
+    function validPhoto(data) {
+      return !('photoData' in data) || data.photoData == null
+        || (data.photoData is string && data.photoData.size() <= 120000
+            && data.photoData[0:11] == 'data:image/');
+    }
+
     // Perfil do cliente: o ID do documento é o uid.
     match /tenants/{tenantId} {
       allow get: if signedIn() && request.auth.uid == tenantId;
+
       allow create: if signedIn() && request.auth.uid == tenantId
-        && request.resource.data.keys().hasOnly(['email', 'createdAt', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['email', 'name', 'photoData', 'createdAt', 'updatedAt'])
         && request.resource.data.email is string
+        && validProfileName(request.resource.data)
+        && validPhoto(request.resource.data)
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time;
-      allow update, delete: if false;
+
+      // O cliente edita só nome e foto. E-mail e data de criação ficam travados.
+      allow update: if signedIn() && request.auth.uid == tenantId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'photoData', 'updatedAt'])
+        && validProfileName(request.resource.data)
+        && validPhoto(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
     }
 
     match /connections/{id} {

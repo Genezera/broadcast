@@ -1,12 +1,28 @@
 import { Link, Outlet, useLocation, useNavigation } from "react-router-dom";
-import { Avatar, IconButton, Tooltip, useMediaQuery } from "@mui/material";
+import { IconButton, Tooltip, useMediaQuery } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useCurrentUser } from "../../features/auth/AuthProvider";
 import { signOutUser } from "../../features/auth/authService";
 import { ConnectionsProvider } from "../../features/connections/ConnectionsProvider";
+import { HelpAssistant } from "../../features/help/HelpAssistant";
+import { UserAvatar } from "../../features/profile/components/UserAvatar";
+import {
+  firstName,
+  resolveDisplayName,
+} from "../../features/profile/displayName";
+import {
+  ProfileProvider,
+  useProfile,
+} from "../../features/profile/ProfileProvider";
 import { BrandMark } from "../ui/BrandMark";
 import { ThemeToggle } from "../ui/ThemeToggle";
-import { NAV_ITEMS, sectionFromPath, type NavItem } from "./navigation";
+import { AccountMenu } from "./AccountMenu";
+import {
+  NAV_ITEMS,
+  sectionFromPath,
+  type NavItem,
+  type Section,
+} from "./navigation";
 
 /**
  * Item do menu lateral. No desktop mostra ícone + texto; no tablet vira um
@@ -34,7 +50,7 @@ function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
 }
 
 /** Barra de navegação inferior, só no celular (alcance do polegar). */
-function BottomNav({ section }: { section: NavItem["id"] }) {
+function BottomNav({ section }: { section: Section }) {
   return (
     <nav
       aria-label="Menu principal"
@@ -70,12 +86,16 @@ function NavigationProgress() {
   );
 }
 
-export function AppLayout() {
+function Shell() {
   const user = useCurrentUser();
+  const { profile } = useProfile();
   const { pathname } = useLocation();
   const section = sectionFromPath(pathname);
-  const current = NAV_ITEMS.find((item) => item.id === section);
-  const initial = user.email?.[0]?.toUpperCase() ?? "U";
+  const title =
+    section === "profile"
+      ? "Minha conta"
+      : NAV_ITEMS.find((item) => item.id === section)?.label;
+  const name = resolveDisplayName(profile, user);
 
   const logout = (
     <Tooltip title="Sair">
@@ -86,7 +106,7 @@ export function AppLayout() {
   );
 
   return (
-    <ConnectionsProvider tenantId={user.uid}>
+    <>
       <NavigationProgress />
       <div className="min-h-screen md:flex">
         {/* Tablet: trilho de 84px. Desktop: menu completo de 248px. */}
@@ -112,19 +132,30 @@ export function AppLayout() {
             ))}
           </nav>
 
-          {/* Rodapé: trilho (avatar + sair) / desktop (cartão da conta). */}
+          {/* Rodapé: trilho (foto + sair) / desktop (cartão da conta). */}
           <div className="mt-auto flex flex-col items-center gap-2 lg:hidden">
-            <Avatar className="avatar-brand">{initial}</Avatar>
+            <Tooltip title="Minha conta" placement="right">
+              <Link to="/profile" aria-label="Minha conta">
+                <UserAvatar />
+              </Link>
+            </Tooltip>
             {logout}
           </div>
-          <div className="mt-auto hidden px-2 lg:block">
-            <div className="flex items-center gap-3 rounded-xl border border-line p-3">
-              <Avatar className="avatar-brand">{initial}</Avatar>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold">Minha conta</p>
-                <p className="truncate text-xs text-muted">{user.email}</p>
-              </div>
-              {logout}
+          <div className="mt-auto hidden lg:block">
+            <div
+              className={`flex items-center gap-1 rounded-xl border p-2 transition-colors ${section === "profile" ? "border-brand/40 bg-brand-soft" : "border-line"}`}
+            >
+              <Link
+                to="/profile"
+                aria-label="Minha conta"
+                className="flex min-w-0 flex-1 items-center gap-3 rounded-lg p-1 transition-colors hover:bg-surface-hover"
+              >
+                <UserAvatar size={40} />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold">{name}</p>
+                  <p className="text-xs text-muted">Minha conta</p>
+                </div>
+              </Link>
             </div>
           </div>
         </aside>
@@ -136,18 +167,15 @@ export function AppLayout() {
                 <BrandMark size="sm" showName={false} />
               </div>
               <p className="truncate font-display text-lg font-extrabold">
-                {current?.label}
+                {title}
               </p>
             </div>
             <div className="flex items-center gap-1 sm:gap-3">
               <span className="hidden max-w-[200px] truncate text-sm text-muted lg:inline">
-                Olá, {user.email?.split("@")[0]}
+                Olá, {firstName(name)}
               </span>
               <ThemeToggle />
-              <Avatar className="avatar-brand !hidden sm:!flex">
-                {initial}
-              </Avatar>
-              <div className="md:hidden">{logout}</div>
+              <AccountMenu />
             </div>
           </header>
 
@@ -160,6 +188,18 @@ export function AppLayout() {
         </div>
       </div>
       <BottomNav section={section} />
-    </ConnectionsProvider>
+      <HelpAssistant />
+    </>
+  );
+}
+
+export function AppLayout() {
+  const user = useCurrentUser();
+  return (
+    <ProfileProvider tenantId={user.uid}>
+      <ConnectionsProvider tenantId={user.uid}>
+        <Shell />
+      </ConnectionsProvider>
+    </ProfileProvider>
   );
 }

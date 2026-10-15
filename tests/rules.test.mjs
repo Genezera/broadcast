@@ -201,8 +201,57 @@ test("tenant profiles are private and can only be created for the own uid", asyn
   await assertSucceeds(getDoc(doc(alice, "tenants", "alice")));
   await assertFails(getDoc(doc(bob, "tenants", "alice")));
   await assertFails(
-    updateDoc(doc(alice, "tenants", "alice"), { email: "b@x.com" }),
+    updateDoc(doc(alice, "tenants", "alice"), {
+      email: "b@x.com",
+      updatedAt: serverTimestamp(),
+    }),
   );
+});
+
+test("tenants can edit only their name and photo, with limits", async () => {
+  const profile = doc(alice, "tenants", "alice");
+  const edit = (data) =>
+    updateDoc(profile, { ...data, updatedAt: serverTimestamp() });
+  const smallPhoto = "data:image/jpeg;base64," + "A".repeat(5000);
+
+  await assertSucceeds(edit({ name: "Alice Souza" }));
+  await assertSucceeds(edit({ photoData: smallPhoto }));
+  await assertSucceeds(edit({ photoData: null })); // remover a foto
+
+  // Nome inválido, foto de outro tipo ou grande demais.
+  await assertFails(edit({ name: "A" }));
+  await assertFails(edit({ name: "x".repeat(61) }));
+  await assertFails(edit({ photoData: "https://exemplo.com/foto.png" }));
+  await assertFails(
+    edit({ photoData: "data:image/jpeg;base64," + "A".repeat(130000) }),
+  );
+  await assertFails(edit({ photoData: 123 }));
+  // Campos que o cliente não pode mexer.
+  await assertFails(edit({ createdAt: serverTimestamp() }));
+  await assertFails(edit({ plan: "pro" }));
+  // Outro cliente não edita este perfil.
+  await assertFails(
+    updateDoc(doc(bob, "tenants", "alice"), {
+      name: "Invasor",
+      updatedAt: serverTimestamp(),
+    }),
+  );
+  await assertFails(deleteDoc(profile));
+});
+
+test("a profile can be created with a valid name only", async () => {
+  const carol = environment.authenticatedContext("carol").firestore();
+  const dave = environment.authenticatedContext("dave").firestore();
+  const create = (db, uid, data) =>
+    setDoc(doc(db, "tenants", uid), {
+      email: "x@x.com",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      ...data,
+    });
+  await assertFails(create(carol, "carol", { name: "" }));
+  await assertSucceeds(create(carol, "carol", { name: "Carol Lima" }));
+  await assertSucceeds(create(dave, "dave", {})); // contas antigas, sem nome
 });
 
 test("connections cannot be deleted or have status and ownership changed by the client", async () => {

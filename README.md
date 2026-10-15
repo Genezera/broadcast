@@ -4,6 +4,8 @@ Aplicação SaaS multi-tenant simplificada para organizar **conexões**, **conta
 
 - **Frontend:** React 19 + TypeScript + Vite, Material UI + Tailwind CSS, React Router, React Hook Form + Zod.
 - **Backend:** Firebase Authentication, Firestore, Cloud Functions v2 (Node 22) e Cloud Scheduler.
+- **Conta do cliente:** nome no cadastro, página Minha conta (editar nome, enviar ou remover foto, alterar senha confirmando a atual) e menu da conta no cabeçalho.
+- **Ajuda:** assistente guiado por botões (sem digitar), que já sugere o assunto da tela atual, e aba de perguntas frequentes.
 - **Responsivo:** celular (barra de navegação inferior, listas em cards, formulários em tela cheia), tablet (menu lateral compacto só com ícones) e desktop (menu completo).
 - **Modo escuro:** botão no cabeçalho e na tela de login; segue o tema do sistema na primeira visita, lembra a escolha e troca com uma revelação circular animada.
 - **Telefone:** campo com seletor de país (bandeira + DDI) e máscara aplicada enquanto digita; o valor é salvo no formato internacional.
@@ -58,12 +60,12 @@ Fluxo de responsabilidades: **UI** (componentes) → **hooks** (leitura em tempo
 
 Quatro coleções **na raiz**, sem subcoleções. Os relacionamentos são feitos por IDs e todo documento carrega o `tenantId`.
 
-| Coleção       | Documento (campos além dos timestamps)                                                              | Quem escreve                                 |
-| ------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| `tenants`     | ID = `uid`; `email`                                                                                 | Cliente (apenas o próprio perfil, uma vez)   |
-| `connections` | `tenantId`, `name`, `status` (`active` \| `deleting`)                                               | Cliente (criar/renomear); Function (excluir) |
-| `contacts`    | `tenantId`, `connectionId`, `name`, `phone`                                                         | Cliente                                      |
-| `messages`    | `tenantId`, `connectionId`, `body`, `contactIds`, `recipients[]`, `status`, `scheduledAt`, `sentAt` | **Somente Cloud Functions**                  |
+| Coleção       | Documento (campos além dos timestamps)                                                              | Quem escreve                                          |
+| ------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `tenants`     | ID = `uid`; `email`, `name`, `photoData`                                                            | Cliente (cria o próprio perfil; edita só nome e foto) |
+| `connections` | `tenantId`, `name`, `status` (`active` \| `deleting`)                                               | Cliente (criar/renomear); Function (excluir)          |
+| `contacts`    | `tenantId`, `connectionId`, `name`, `phone`                                                         | Cliente                                               |
+| `messages`    | `tenantId`, `connectionId`, `body`, `contactIds`, `recipients[]`, `status`, `scheduledAt`, `sentAt` | **Somente Cloud Functions**                           |
 
 Decisões:
 
@@ -169,6 +171,7 @@ O Hosting serve `web/dist` com fallback para `index.html` (SPA). Registre dois u
 
 ## Decisões e limitações
 
+- **Foto de perfil sem Storage:** a imagem é recortada e reduzida para 256 px no navegador (JPEG, ~20–40 KB) e guardada como data URL em `tenants/{uid}.photoData`. As Security Rules aceitam só `data:image/…` de até 120 KB. Evita configurar mais um serviço para um avatar; para fotos grandes ou compartilhadas, o caminho natural seria o Firebase Storage.
 - **Conta:** login, cadastro e recuperação de senha por e-mail (Firebase Authentication).
 - **Frequência do agendador:** a cada minuto; o envio ocorre com tolerância de até ~1 minuto. Para precisão por mensagem, a evolução natural seria Cloud Tasks.
 - **Sem RBAC:** há um usuário por cliente, então não há papéis.

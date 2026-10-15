@@ -43,3 +43,12 @@ export type Message = {
   createdAt: Timestamp;
   updatedAt: Timestamp;
 };
+
+/** Perfil do cliente em /tenants/{uid}. `photoData` é um data URL pequeno (JPEG). */
+export type TenantProfile = {
+  email: string;
+  name?: string;
+  photoData?: string | null;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+};

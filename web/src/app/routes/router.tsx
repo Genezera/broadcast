@@ -47,6 +47,14 @@ export const router = createBrowserRouter([
             ),
           },
           {
+            path: "profile",
+            lazy: lazyPage(() =>
+              import("../../features/profile/ProfilePage").then(
+                (m) => m.ProfilePage,
+              ),
+            ),
+          },
+          {
             path: "contacts",
             element: <ConnectionRedirect section="contacts" />,
           },

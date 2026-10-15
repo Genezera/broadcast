@@ -36,12 +36,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         open={!!notice}
         autoHideDuration={5000}
         onClose={(_, reason) => reason !== "clickaway" && setNotice(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        sx={{
-          bottom: { xs: 88, md: 24 },
-          left: { xs: 16, sm: "auto" },
-          right: { xs: 16, sm: 24 },
-        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        // No celular sobe acima da barra de navegação inferior.
+        sx={{ bottom: { xs: 88, md: 24 } }}
       >
         <Alert
           onClose={() => setNotice(null)}

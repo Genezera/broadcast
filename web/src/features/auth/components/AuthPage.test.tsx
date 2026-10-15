@@ -50,6 +50,7 @@ describe("AuthPage", () => {
   it("requires six characters only when registering", async () => {
     renderPage();
     await userEvent.click(screen.getByRole("button", { name: "Cadastre-se" }));
+    await userEvent.type(screen.getByLabelText("Nome"), "Ana Souza");
     await userEvent.type(email(), "ana@exemplo.com");
     await userEvent.type(password(), "123");
     await userEvent.click(screen.getByRole("button", { name: "Criar conta" }));

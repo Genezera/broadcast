@@ -7,6 +7,7 @@ describe("sectionFromPath", () => {
     ["/connections", "connections"],
     ["/contacts", "contacts"],
     ["/broadcasts", "broadcasts"],
+    ["/profile", "profile"],
     ["/connections/abc123/contacts", "contacts"],
     ["/connections/abc123/broadcasts", "broadcasts"],
   ])("maps %s to %s", (path, section) => {
