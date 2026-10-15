@@ -1,18 +1,16 @@
-export const AVATAR_SIZE = 256;
-export const MAX_FILE_BYTES = 5 * 1024 * 1024;
-export const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const AVATAR_SIZE = 256;
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-/** Valida o arquivo antes de processar; devolve a mensagem de erro ou `null`. */
+export type ImageProblem = "type" | "size";
+
+/** Valida o arquivo antes de processar; devolve o problema ou `null`. */
 export const validateImageFile = (file: {
   type: string;
   size: number;
-}): string | null => {
-  if (!ACCEPTED_TYPES.includes(file.type)) {
-    return "Use uma imagem JPG, PNG ou WebP.";
-  }
-  if (file.size > MAX_FILE_BYTES) {
-    return "A imagem deve ter no máximo 5 MB.";
-  }
+}): ImageProblem | null => {
+  if (!ACCEPTED_TYPES.includes(file.type)) return "type";
+  if (file.size > MAX_FILE_BYTES) return "size";
   return null;
 };
 

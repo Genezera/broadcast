@@ -3,6 +3,7 @@ import GlobalStyles from "@mui/material/GlobalStyles";
 import { StyledEngineProvider } from "@mui/material/styles";
 import { SplashScreen } from "../components/ui/SplashScreen";
 import { AuthProvider, useAuth } from "../features/auth/AuthProvider";
+import { I18nProvider } from "../i18n/I18nProvider";
 import { NotificationProvider } from "./providers/NotificationProvider";
 import { ThemeModeProvider } from "./providers/ThemeModeProvider";
 import { router } from "./routes/router";
@@ -26,13 +27,15 @@ export default function App() {
     // sobrescrever um componente do MUI sem precisar de !important.
     <StyledEngineProvider enableCssLayer>
       <GlobalStyles styles="@layer theme, base, mui, components, utilities;" />
-      <ThemeModeProvider>
-        <NotificationProvider>
-          <AuthProvider>
-            <AppContent />
-          </AuthProvider>
-        </NotificationProvider>
-      </ThemeModeProvider>
+      <I18nProvider>
+        <ThemeModeProvider>
+          <NotificationProvider>
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
+          </NotificationProvider>
+        </ThemeModeProvider>
+      </I18nProvider>
     </StyledEngineProvider>
   );
 }

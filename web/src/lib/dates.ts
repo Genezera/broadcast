@@ -1,12 +1,23 @@
-type TimestampLike = { toDate: () => Date };
+export type TimestampLike = { toDate: () => Date };
 
-const formatter = new Intl.DateTimeFormat("pt-BR", {
-  dateStyle: "short",
-  timeStyle: "short",
-});
+// Um formatador por idioma (criar Intl.DateTimeFormat é relativamente caro).
+const formatters = new Map<string, Intl.DateTimeFormat>();
+const formatterFor = (locale: string) => {
+  let formatter = formatters.get(locale);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale, {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
+    formatters.set(locale, formatter);
+  }
+  return formatter;
+};
 
-export const formatDateTime = (value?: TimestampLike | null): string =>
-  value ? formatter.format(value.toDate()) : "—";
+export const formatDateTime = (
+  value?: TimestampLike | null,
+  locale = "pt-BR",
+): string => (value ? formatterFor(locale).format(value.toDate()) : "—");
 
 const pad = (value: number) => String(value).padStart(2, "0");
 

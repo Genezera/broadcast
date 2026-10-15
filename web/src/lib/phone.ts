@@ -7,7 +7,7 @@ import {
 
 export type { CountryCode };
 
-export const DEFAULT_COUNTRY: CountryCode = "BR";
+const DEFAULT_COUNTRY: CountryCode = "BR";
 
 // Países oferecidos no seletor. Lista curta de propósito: cobre o público do
 // produto sem carregar as 240 bandeiras no bundle.
@@ -26,10 +26,18 @@ export const callingCode = (country: CountryCode): string =>
 
 export const digitsOf = (text: string): string => text.replace(/\D/g, "");
 
-/** Nome do país em português (ex.: "Brasil"), pelo Intl do navegador. */
-const regionNames = new Intl.DisplayNames(["pt-BR"], { type: "region" });
-export const countryName = (country: CountryCode): string =>
-  regionNames.of(country) ?? country;
+// Um DisplayNames por idioma (criar o objeto é relativamente caro).
+const regionNames = new Map<string, Intl.DisplayNames>();
+
+/** Nome do país no idioma pedido (ex.: "Brasil" / "Brazil"), pelo Intl do navegador. */
+export const countryName = (country: CountryCode, locale = "pt-BR"): string => {
+  let names = regionNames.get(locale);
+  if (!names) {
+    names = new Intl.DisplayNames([locale], { type: "region" });
+    regionNames.set(locale, names);
+  }
+  return names.of(country) ?? country;
+};
 
 /** Parte nacional formatada enquanto digita: "(11) 99999-1111". */
 export const formatNational = (

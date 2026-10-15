@@ -3,22 +3,24 @@ import { squareCrop, validateImageFile } from "./image";
 
 describe("validateImageFile", () => {
   it("accepts common image types within the size limit", () => {
-    expect(validateImageFile({ type: "image/jpeg", size: 1_000_000 })).toBeNull();
+    expect(
+      validateImageFile({ type: "image/jpeg", size: 1_000_000 }),
+    ).toBeNull();
     expect(validateImageFile({ type: "image/png", size: 10 })).toBeNull();
     expect(validateImageFile({ type: "image/webp", size: 10 })).toBeNull();
   });
 
   it("rejects other file types", () => {
     expect(validateImageFile({ type: "application/pdf", size: 10 })).toBe(
-      "Use uma imagem JPG, PNG ou WebP.",
+      "type",
     );
-    expect(validateImageFile({ type: "image/svg+xml", size: 10 })).not.toBeNull();
+    expect(validateImageFile({ type: "image/svg+xml", size: 10 })).toBe("type");
   });
 
   it("rejects files above 5 MB", () => {
-    expect(validateImageFile({ type: "image/jpeg", size: 6 * 1024 * 1024 })).toBe(
-      "A imagem deve ter no máximo 5 MB.",
-    );
+    expect(
+      validateImageFile({ type: "image/jpeg", size: 6 * 1024 * 1024 }),
+    ).toBe("size");
   });
 });
 

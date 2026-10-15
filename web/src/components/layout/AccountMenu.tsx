@@ -11,23 +11,25 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import { useCurrentUser } from "../../features/auth/AuthProvider";
 import { signOutUser } from "../../features/auth/authService";
+import { useT } from "../../i18n/I18nProvider";
 import { resolveDisplayName } from "../../features/profile/displayName";
 import { UserAvatar } from "../../features/profile/components/UserAvatar";
 import { useProfile } from "../../features/profile/ProfileProvider";
 
 /** Foto do cliente no cabeçalho; abre o menu com Minha conta e Sair. */
 export function AccountMenu() {
+  const t = useT();
   const navigate = useNavigate();
   const user = useCurrentUser();
   const { profile } = useProfile();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const name = resolveDisplayName(profile, user);
+  const name = resolveDisplayName(profile, user, t("nav.defaultUserName"));
   const close = () => setAnchor(null);
 
   return (
     <>
       <IconButton
-        aria-label="Abrir menu da conta"
+        aria-label={t("nav.openAccountMenu")}
         aria-haspopup="menu"
         onClick={(event) => setAnchor(event.currentTarget)}
         sx={{ p: 0.5 }}
@@ -44,7 +46,7 @@ export function AccountMenu() {
       >
         <div className="px-4 pb-2 pt-1">
           <p className="truncate font-bold">{name}</p>
-          <p className="text-xs text-muted">Minha conta</p>
+          <p className="text-xs text-muted">{t("nav.account")}</p>
         </div>
         <Divider />
         <MenuItem
@@ -56,7 +58,7 @@ export function AccountMenu() {
           <ListItemIcon>
             <PersonOutlineIcon fontSize="small" />
           </ListItemIcon>
-          Perfil e senha
+          {t("nav.profileAndPassword")}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -67,7 +69,7 @@ export function AccountMenu() {
           <ListItemIcon>
             <LogoutIcon fontSize="small" />
           </ListItemIcon>
-          Sair
+          {t("nav.logout")}
         </MenuItem>
       </Menu>
     </>

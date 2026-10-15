@@ -1,43 +1,55 @@
-const FALLBACK = "Não foi possível concluir a operação. Tente novamente.";
+import type { TKey, Translator } from "../i18n/translate";
 
-const AUTH_MESSAGES: Record<string, string> = {
-  "auth/email-already-in-use": "Este e-mail já está cadastrado.",
-  "auth/invalid-email": "Digite um e-mail válido.",
-  "auth/weak-password": "A senha deve ter pelo menos 6 caracteres.",
-  "auth/invalid-credential": "E-mail ou senha incorretos.",
-  "auth/user-disabled": "Esta conta foi desativada.",
-  "auth/requires-recent-login":
-    "Por segurança, saia e entre novamente para fazer esta alteração.",
-  "auth/too-many-requests":
-    "Muitas tentativas. Aguarde alguns instantes e tente novamente.",
-  "auth/network-request-failed": "Sem conexão com a internet.",
+const AUTH_KEYS: Record<string, TKey> = {
+  "auth/email-already-in-use": "errors.auth.emailInUse",
+  "auth/invalid-email": "errors.auth.invalidEmail",
+  "auth/weak-password": "errors.auth.weakPassword",
+  "auth/invalid-credential": "errors.auth.invalidCredential",
+  "auth/user-disabled": "errors.auth.userDisabled",
+  "auth/requires-recent-login": "errors.auth.requiresRecentLogin",
+  "auth/too-many-requests": "errors.auth.tooManyRequests",
+  "auth/network-request-failed": "errors.auth.network",
 };
 
-const FIREBASE_MESSAGES: Record<string, string> = {
-  "permission-denied": "Você não tem permissão para realizar esta ação.",
-  unauthenticated: "Sua sessão expirou. Entre novamente.",
-  unavailable: "Serviço indisponível no momento. Tente novamente.",
-  "deadline-exceeded": "A operação demorou demais. Tente novamente.",
+const FIREBASE_KEYS: Record<string, TKey> = {
+  "permission-denied": "errors.firebase.permissionDenied",
+  unauthenticated: "errors.firebase.unauthenticated",
+  unavailable: "errors.firebase.unavailable",
+  "deadline-exceeded": "errors.firebase.deadlineExceeded",
 };
 
-/** Callables retornam mensagens já prontas para o usuário nestes códigos. */
-const CALLABLE_CODES = [
-  "invalid-argument",
-  "not-found",
-  "failed-precondition",
-];
+type ErrorLike = {
+  code?: string;
+  message?: string;
+  /** Chave de erro enviada pelas Cloud Functions (ver functions/src/shared/errors.ts). */
+  details?: { key?: string; params?: Record<string, string | number> };
+};
 
-/** Converte qualquer erro do Firebase em uma mensagem amigável em português. */
-export const getErrorMessage = (error: unknown): string => {
-  const { code, message } = (error ?? {}) as {
-    code?: string;
-    message?: string;
-  };
-  if (!code) return FALLBACK;
-  if (AUTH_MESSAGES[code]) return AUTH_MESSAGES[code];
+/**
+ * Converte qualquer erro do Firebase em uma mensagem amigável no idioma do
+ * usuário. Erros das Cloud Functions trazem uma chave em `details`, traduzida
+ * aqui; sem ela, usa o código do erro.
+ */
+export const getErrorMessage = (error: unknown, t: Translator): string => {
+  const { code, message, details } = (error ?? {}) as ErrorLike;
+  if (!code) return t("errors.generic");
+  if (AUTH_KEYS[code]) return t(AUTH_KEYS[code]);
+
+  if (details?.key) {
+    const text = t.maybe(`errors.server.${details.key}`, details.params);
+    if (text) return text;
+  }
 
   const shortCode = code.replace(/^(functions|firestore)\//, "");
-  if (FIREBASE_MESSAGES[shortCode]) return FIREBASE_MESSAGES[shortCode];
-  if (CALLABLE_CODES.includes(shortCode) && message) return message;
-  return FALLBACK;
+  if (FIREBASE_KEYS[shortCode]) return t(FIREBASE_KEYS[shortCode]);
+  // Códigos de validação já vêm com um texto pronto da function.
+  if (
+    ["invalid-argument", "not-found", "failed-precondition"].includes(
+      shortCode,
+    ) &&
+    message
+  ) {
+    return message;
+  }
+  return t("errors.generic");
 };

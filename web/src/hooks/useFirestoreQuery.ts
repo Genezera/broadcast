@@ -1,5 +1,6 @@
 import { useEffect, useState, type DependencyList } from "react";
 import { onSnapshot, type Query } from "firebase/firestore";
+import { useI18n } from "../i18n/I18nProvider";
 import { getErrorMessage } from "../lib/errors";
 
 export type QueryState<T> = {
@@ -7,6 +8,8 @@ export type QueryState<T> = {
   loading: boolean;
   error: string;
 };
+
+type RawState<T> = Omit<QueryState<T>, "error"> & { failure: unknown };
 
 /**
  * Assina uma consulta do Firestore em tempo real e devolve os documentos com
@@ -17,10 +20,13 @@ export function useFirestoreQuery<T extends { id: string }>(
   buildQuery: () => Query,
   deps: DependencyList,
 ): QueryState<T> {
-  const [state, setState] = useState<QueryState<T>>({
+  const { t } = useI18n();
+  // Guardo o erro bruto e traduzo na leitura: se o idioma mudar com o erro na
+  // tela, a mensagem acompanha.
+  const [state, setState] = useState<RawState<T>>({
     items: [],
     loading: true,
-    error: "",
+    failure: null,
   });
 
   useEffect(() => {
@@ -37,14 +43,18 @@ export function useFirestoreQuery<T extends { id: string }>(
             (document) => ({ id: document.id, ...document.data() }) as T,
           ),
           loading: false,
-          error: "",
+          failure: null,
         }),
       // Erro comum aqui: permission-denied (query sem filtro de tenantId) ou
       // índice composto ausente.
       (cause) =>
-        setState({ items: [], loading: false, error: getErrorMessage(cause) }),
+        setState({ items: [], loading: false, failure: cause ?? true }),
     );
   }, deps);
 
-  return state;
+  return {
+    items: state.items,
+    loading: state.loading,
+    error: state.failure ? getErrorMessage(state.failure, t) : "",
+  };
 }

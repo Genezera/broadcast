@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { TKey } from "../../i18n/translate";
 import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
@@ -6,7 +7,8 @@ import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 
 export type NavItem = {
   id: "overview" | "connections" | "contacts" | "broadcasts";
-  label: string;
+  /** Chave de tradução do rótulo do menu. */
+  labelKey: TKey;
   to: string;
   icon: ReactNode;
 };
@@ -14,25 +16,25 @@ export type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   {
     id: "overview",
-    label: "Visão geral",
+    labelKey: "nav.overview",
     to: "/",
     icon: <DashboardOutlinedIcon fontSize="small" />,
   },
   {
     id: "connections",
-    label: "Conexões",
+    labelKey: "nav.connections",
     to: "/connections",
     icon: <HubOutlinedIcon fontSize="small" />,
   },
   {
     id: "contacts",
-    label: "Contatos",
+    labelKey: "nav.contacts",
     to: "/contacts",
     icon: <PeopleOutlineIcon fontSize="small" />,
   },
   {
     id: "broadcasts",
-    label: "Broadcast",
+    labelKey: "nav.broadcasts",
     to: "/broadcasts",
     icon: <CampaignOutlinedIcon fontSize="small" />,
   },
