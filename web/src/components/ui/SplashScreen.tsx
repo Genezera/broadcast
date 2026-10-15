@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
+import { useT } from "../../i18n/I18nProvider";
 
 // Tempo total da saída (precisa cobrir a sequência de .splash-leaving em
 // styles.css): o carregamento some, a marca esmaece e o painel roxo abre
@@ -14,6 +15,7 @@ type Phase = "visible" | "leaving" | "gone";
  * Vive acima do router, então só aparece uma vez por carregamento da página.
  */
 export function SplashScreen({ ready }: { ready: boolean }) {
+  const t = useT();
   const [phase, setPhase] = useState<Phase>("visible");
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export function SplashScreen({ ready }: { ready: boolean }) {
     <div
       className={`splash ${phase === "leaving" ? "splash-leaving" : ""}`}
       role="status"
-      aria-label="Carregando"
+      aria-label={t("common.loading")}
     >
       <div className="splash-glow" />
       <div className="splash-content">

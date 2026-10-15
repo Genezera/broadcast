@@ -1,34 +1,41 @@
 import { z } from "zod";
+import type { Translator } from "../../i18n/translate";
 
-export const emailSchema = z
-  .string()
-  .trim()
-  .min(1, "Informe o e-mail.")
-  .email("Digite um e-mail válido.");
+// Os schemas são funções do tradutor: as mensagens de validação aparecem no
+// idioma escolhido (os componentes recriam o schema quando o idioma muda).
+
+export const emailSchema = (t: Translator) =>
+  z
+    .string()
+    .trim()
+    .min(1, t("auth.validation.emailRequired"))
+    .email(t("auth.validation.emailInvalid"));
 
 /** Nome de exibição do cliente (cadastro e edição de perfil). */
-export const nameSchema = z
-  .string()
-  .trim()
-  .min(2, "Informe seu nome.")
-  .max(60, "Use no máximo 60 caracteres.");
+export const nameSchema = (t: Translator) =>
+  z
+    .string()
+    .trim()
+    .min(2, t("auth.validation.nameRequired"))
+    .max(60, t("auth.validation.nameTooLong"));
 
-export const passwordSchema = z
-  .string()
-  .min(6, "A senha deve ter pelo menos 6 caracteres.");
+export const passwordSchema = (t: Translator) =>
+  z.string().min(6, t("auth.validation.passwordShort"));
 
 // O campo de nome existe nos dois formulários (só aparece no cadastro); no
 // login ele é ignorado.
-export const signInSchema = z.object({
-  name: z.string(),
-  email: emailSchema,
-  password: z.string().min(1, "Informe a senha."),
-});
+export const signInSchema = (t: Translator) =>
+  z.object({
+    name: z.string(),
+    email: emailSchema(t),
+    password: z.string().min(1, t("auth.validation.passwordRequired")),
+  });
 
-export const signUpSchema = z.object({
-  name: nameSchema,
-  email: emailSchema,
-  password: passwordSchema,
-});
+export const signUpSchema = (t: Translator) =>
+  z.object({
+    name: nameSchema(t),
+    email: emailSchema(t),
+    password: passwordSchema(t),
+  });
 
-export type AuthFormValues = z.infer<typeof signUpSchema>;
+export type AuthFormValues = z.infer<ReturnType<typeof signUpSchema>>;

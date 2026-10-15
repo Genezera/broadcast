@@ -12,6 +12,8 @@ import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { useNotify } from "../../../app/providers/NotificationProvider";
 import { FormTextField } from "../../../components/ui/FormTextField";
+import { useI18n } from "../../../i18n/I18nProvider";
+import { useRevalidateOnLanguage } from "../../../i18n/useRevalidateOnLanguage";
 import { getErrorMessage } from "../../../lib/errors";
 import { useCurrentUser } from "../../auth/AuthProvider";
 import { changePassword } from "../../auth/authService";
@@ -25,31 +27,38 @@ const empty: ChangePasswordValues = {
 
 /** Troca de senha de quem já está logado (pede a senha atual). */
 export function PasswordForm() {
+  const { t } = useI18n();
   const user = useCurrentUser();
   const notify = useNotify();
   const [visible, setVisible] = useState(false);
-  const [error, setError] = useState("");
+  // Guardo o erro (não o texto) para a mensagem acompanhar o idioma.
+  const [error, setError] = useState<{
+    wrongCurrent: boolean;
+    cause?: unknown;
+  } | null>(null);
 
-  const { control, handleSubmit, reset, formState } =
+  const { control, handleSubmit, reset, trigger, formState } =
     useForm<ChangePasswordValues>({
-      resolver: zodResolver(changePasswordSchema),
+      resolver: zodResolver(changePasswordSchema(t)),
       defaultValues: empty,
     });
 
+  useRevalidateOnLanguage({ trigger, formState });
+
   const submit = handleSubmit(async (values) => {
-    setError("");
+    setError(null);
     try {
       await changePassword(user, values.currentPassword, values.newPassword);
-      notify.success("Senha alterada com sucesso.");
+      notify.success(t("profile.security.success"));
       reset(empty);
     } catch (cause) {
       const code = (cause as { code?: string }).code ?? "";
       // Aqui "credencial inválida" só pode ser a senha atual errada.
-      setError(
-        code === "auth/invalid-credential" || code === "auth/wrong-password"
-          ? "A senha atual está incorreta."
-          : getErrorMessage(cause),
-      );
+      setError({
+        wrongCurrent:
+          code === "auth/invalid-credential" || code === "auth/wrong-password",
+        cause,
+      });
     }
   });
 
@@ -58,7 +67,9 @@ export function PasswordForm() {
       <IconButton
         edge="end"
         size="small"
-        aria-label={visible ? "Ocultar senhas" : "Mostrar senhas"}
+        aria-label={
+          visible ? t("profile.security.hide") : t("profile.security.show")
+        }
         onClick={() => setVisible((current) => !current)}
       >
         {visible ? (
@@ -77,7 +88,7 @@ export function PasswordForm() {
         <FormTextField
           control={control}
           name="currentPassword"
-          label="Senha atual"
+          label={t("profile.security.current")}
           type={type}
           fullWidth
           autoComplete="current-password"
@@ -86,28 +97,36 @@ export function PasswordForm() {
         <FormTextField
           control={control}
           name="newPassword"
-          label="Nova senha"
+          label={t("profile.security.new")}
           type={type}
           fullWidth
           autoComplete="new-password"
-          helperText="Mínimo de 6 caracteres."
+          helperText={t("profile.security.hint")}
         />
         <FormTextField
           control={control}
           name="confirmPassword"
-          label="Confirmar nova senha"
+          label={t("profile.security.confirm")}
           type={type}
           fullWidth
           autoComplete="new-password"
         />
-        {error && <Alert severity="error">{error}</Alert>}
+        {error && (
+          <Alert severity="error">
+            {error.wrongCurrent
+              ? t("profile.security.wrongCurrent")
+              : getErrorMessage(error.cause, t)}
+          </Alert>
+        )}
         <div>
           <Button
             type="submit"
             variant="contained"
             disabled={formState.isSubmitting}
           >
-            {formState.isSubmitting ? "Alterando..." : "Alterar senha"}
+            {formState.isSubmitting
+              ? t("profile.security.submitting")
+              : t("profile.security.submit")}
           </Button>
         </div>
       </Stack>

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { translators } from "../../i18n/translate";
 import { toLocalInputValue } from "../../lib/dates";
 import { messageSchema } from "./schemas";
+
+const schema = messageSchema(translators.pt);
 
 const valid = {
   contactIds: ["a"],
@@ -10,7 +13,7 @@ const valid = {
 };
 
 const messages = (values: unknown) => {
-  const result = messageSchema.safeParse(values);
+  const result = schema.safeParse(values);
   return result.success
     ? []
     : result.error.issues.map((issue) => issue.message);

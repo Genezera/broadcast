@@ -4,7 +4,7 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import SendOutlinedIcon from "@mui/icons-material/SendOutlined";
 import { StatusChip } from "../../../components/ui/StatusChip";
-import { formatDateTime } from "../../../lib/dates";
+import { useI18n } from "../../../i18n/I18nProvider";
 import type { Message } from "../../../types";
 
 type MessageItemProps = {
@@ -21,6 +21,7 @@ export function MessageItem({
   onEdit,
   onDelete,
 }: MessageItemProps) {
+  const { t, formatDateTime } = useI18n();
   const scheduled = message.status === "scheduled";
   return (
     <article
@@ -36,34 +37,45 @@ export function MessageItem({
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <StatusChip status={message.status} />
           <span className="text-xs text-muted">
-            {scheduled ? "Para" : "Em"}{" "}
-            {formatDateTime(scheduled ? message.scheduledAt : message.sentAt)}
+            {t(
+              scheduled
+                ? "broadcasts.item.scheduledFor"
+                : "broadcasts.item.sentAt",
+              {
+                date: formatDateTime(
+                  scheduled ? message.scheduledAt : message.sentAt,
+                ),
+              },
+            )}
           </span>
         </div>
         <p className="whitespace-pre-wrap break-words text-ink">
           {message.body}
         </p>
         <p className="mt-3 text-xs text-muted">
-          Para{" "}
-          {message.recipients.map((recipient) => recipient.name).join(", ")} ·{" "}
-          {message.recipients.length} contato(s)
+          {t("broadcasts.item.recipients", {
+            names: message.recipients
+              .map((recipient) => recipient.name)
+              .join(", "),
+            count: message.recipients.length,
+          })}
         </p>
       </div>
       <div className="flex gap-1 self-end sm:self-start">
-        <Tooltip title="Editar">
+        <Tooltip title={t("common.edit")}>
           <IconButton
             size="small"
-            aria-label="Editar mensagem"
+            aria-label={t("broadcasts.editAria")}
             onClick={() => onEdit(message)}
           >
             <EditOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Excluir">
+        <Tooltip title={t("common.delete")}>
           <IconButton
             size="small"
             color="error"
-            aria-label="Excluir mensagem"
+            aria-label={t("broadcasts.deleteAria")}
             onClick={() => onDelete(message)}
           >
             <DeleteOutlineIcon fontSize="small" />

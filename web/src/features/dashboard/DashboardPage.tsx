@@ -13,7 +13,7 @@ import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import { ListSkeleton } from "../../components/ui/ListSkeleton";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { StatusChip } from "../../components/ui/StatusChip";
-import { formatDateTime } from "../../lib/dates";
+import { useI18n } from "../../i18n/I18nProvider";
 import { useCurrentUser } from "../auth/AuthProvider";
 import { useRecentMessages } from "../broadcasts/hooks/useMessages";
 import { useConnectionsContext } from "../connections/ConnectionsProvider";
@@ -31,6 +31,7 @@ type Metric = {
 const RECENT_LIMIT = 5;
 
 export function DashboardPage() {
+  const { t, formatDateTime } = useI18n();
   const user = useCurrentUser();
   const navigate = useNavigate();
   const {
@@ -54,35 +55,35 @@ export function DashboardPage() {
   const metrics = useMemo<Metric[]>(
     () => [
       {
-        label: "Conexões",
+        label: t("dashboard.metrics.connections"),
         value: loadingConnections ? null : activeConnections.length,
         icon: <HubOutlinedIcon />,
         className: "bg-brand-soft text-brand",
         to: "/connections",
       },
       {
-        label: "Contatos",
+        label: t("dashboard.metrics.contacts"),
         value: counts.contacts,
         icon: <PeopleOutlineIcon />,
         className: "bg-success-soft text-success",
         to: "/contacts",
       },
       {
-        label: "Enviadas",
+        label: t("dashboard.metrics.sent"),
         value: counts.sent,
         icon: <SendOutlinedIcon />,
         className: "bg-warning-soft text-warning",
         to: "/broadcasts",
       },
       {
-        label: "Agendadas",
+        label: t("dashboard.metrics.scheduled"),
         value: counts.scheduled,
         icon: <ScheduleIcon />,
         className: "bg-info-soft text-info",
         to: "/broadcasts",
       },
     ],
-    [activeConnections, loadingConnections, counts],
+    [activeConnections, loadingConnections, counts, t],
   );
 
   const connectionNames = useMemo(
@@ -94,8 +95,8 @@ export function DashboardPage() {
   return (
     <>
       <PageHeader
-        title="Visão geral"
-        description="Acompanhe sua comunicação em um só lugar."
+        title={t("dashboard.title")}
+        description={t("dashboard.subtitle")}
       />
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -106,14 +107,12 @@ export function DashboardPage() {
       <div className="surface animate-pop mb-6 flex flex-wrap items-center justify-between gap-4 !border-0 bg-gradient-to-r from-[#6253e8] to-[#8779f5] p-6 text-white lg:p-8">
         <div>
           <p className="mb-2 text-sm font-bold uppercase text-[#e8e4ff]">
-            Seu espaço de comunicação
+            {t("dashboard.banner.eyebrow")}
           </p>
           <h2 className="mb-2 font-display text-2xl font-extrabold lg:text-3xl">
-            Tudo pronto para se conectar?
+            {t("dashboard.banner.title")}
           </h2>
-          <p className="text-[#ebe8ff]">
-            Crie uma conexão, organize contatos e envie sua primeira mensagem.
-          </p>
+          <p className="text-[#ebe8ff]">{t("dashboard.banner.text")}</p>
         </div>
         <Button
           variant="contained"
@@ -127,7 +126,9 @@ export function DashboardPage() {
             navigate(hasConnections ? "/broadcasts" : "/connections")
           }
         >
-          {hasConnections ? "Criar mensagem" : "Criar conexão"}
+          {hasConnections
+            ? t("dashboard.banner.createMessage")
+            : t("dashboard.banner.createConnection")}
         </Button>
       </div>
 
@@ -157,10 +158,10 @@ export function DashboardPage() {
         <div className="mb-5 flex items-center justify-between">
           <div>
             <Typography variant="h6" component="h2">
-              Mensagens recentes
+              {t("dashboard.recent.title")}
             </Typography>
             <Typography color="text.secondary" fontSize={13}>
-              De todas as suas conexões
+              {t("dashboard.recent.subtitle")}
             </Typography>
           </div>
           <Button
@@ -168,7 +169,7 @@ export function DashboardPage() {
             to="/broadcasts"
             endIcon={<ArrowForwardIcon />}
           >
-            Ver todas
+            {t("dashboard.recent.seeAll")}
           </Button>
         </div>
         {loadingMessages || loadingConnections ? (
@@ -176,8 +177,8 @@ export function DashboardPage() {
         ) : messages.length === 0 ? (
           <EmptyState
             icon={<CampaignOutlinedIcon sx={{ fontSize: 36 }} />}
-            title="Nenhuma mensagem ainda"
-            description="As mensagens enviadas e agendadas aparecerão aqui."
+            title={t("dashboard.recent.emptyTitle")}
+            description={t("dashboard.recent.emptyText")}
           />
         ) : (
           <div>
@@ -201,8 +202,13 @@ export function DashboardPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{message.body}</p>
                     <p className="text-xs text-muted">
-                      {connectionNames.get(message.connectionId) ?? "Conexão"} ·{" "}
-                      {message.recipients.length} destinatário(s) ·{" "}
+                      {connectionNames.get(message.connectionId) ??
+                        t("dashboard.recent.connectionFallback")}{" "}
+                      ·{" "}
+                      {t("dashboard.recent.recipients", {
+                        count: message.recipients.length,
+                      })}{" "}
+                      ·{" "}
                       {formatDateTime(
                         sent ? message.sentAt : message.scheduledAt,
                       )}

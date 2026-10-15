@@ -8,11 +8,12 @@ type UserLike = { displayName?: string | null; email?: string | null };
 export const resolveDisplayName = (
   profile: ProfileLike,
   user: UserLike,
+  fallback = "User",
 ): string =>
   profile?.name?.trim() ||
   user.displayName?.trim() ||
   user.email?.split("@")[0] ||
-  "Usuário";
+  fallback;
 
 export const firstName = (fullName: string): string =>
   fullName.trim().split(/\s+/)[0] ?? fullName;

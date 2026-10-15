@@ -4,6 +4,7 @@ import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { Loading } from "../../../components/ui/Loading";
 import { useConnectionsContext } from "../ConnectionsProvider";
+import { useI18n } from "../../../i18n/I18nProvider";
 import { readLastConnectionId } from "../lastConnection";
 
 /**
@@ -15,6 +16,7 @@ export function ConnectionRedirect({
 }: {
   section: "contacts" | "broadcasts";
 }) {
+  const { t } = useI18n();
   const { activeConnections, loading } = useConnectionsContext();
   if (loading) return <Loading />;
 
@@ -30,15 +32,15 @@ export function ConnectionRedirect({
     <div className="surface">
       <EmptyState
         icon={<HubOutlinedIcon sx={{ fontSize: 38 }} />}
-        title="Crie uma conexão primeiro"
+        title={t("connections.createFirstTitle")}
         description={
           section === "contacts"
-            ? "Os contatos são organizados por conexão."
-            : "As mensagens pertencem a uma conexão."
+            ? t("connections.createFirstContacts")
+            : t("connections.createFirstMessages")
         }
         action={
           <Button component={Link} to="/connections" variant="contained">
-            Ir para conexões
+            {t("connections.goToConnections")}
           </Button>
         }
       />

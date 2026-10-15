@@ -13,7 +13,8 @@ describe("resolveDisplayName", () => {
   });
 
   it("has a last-resort fallback", () => {
-    expect(resolveDisplayName(undefined, {})).toBe("Usuário");
+    expect(resolveDisplayName(undefined, {}, "Usuário")).toBe("Usuário");
+    expect(resolveDisplayName(undefined, {})).toBe("User");
   });
 });
 

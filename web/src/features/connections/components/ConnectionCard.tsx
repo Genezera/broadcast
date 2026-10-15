@@ -3,7 +3,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
-import { formatDateTime } from "../../../lib/dates";
+import { useI18n } from "../../../i18n/I18nProvider";
 import type { Connection } from "../../../types";
 
 type ConnectionCardProps = {
@@ -22,6 +22,7 @@ export function ConnectionCard({
   onDelete,
   onOpen,
 }: ConnectionCardProps) {
+  const { t, formatDateTime } = useI18n();
   const deleting = connection.status === "deleting";
   return (
     <article
@@ -33,11 +34,13 @@ export function ConnectionCard({
           <HubOutlinedIcon />
         </span>
         <div>
-          <Tooltip title="Editar">
+          <Tooltip title={t("common.edit")}>
             <span>
               <IconButton
                 size="small"
-                aria-label={`Editar ${connection.name}`}
+                aria-label={t("connections.editAria", {
+                  name: connection.name,
+                })}
                 onClick={() => onEdit(connection)}
                 disabled={deleting}
               >
@@ -45,11 +48,15 @@ export function ConnectionCard({
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title={deleting ? "Tentar exclusão novamente" : "Excluir"}>
+          <Tooltip
+            title={deleting ? t("connections.retryDelete") : t("common.delete")}
+          >
             <IconButton
               size="small"
               color="error"
-              aria-label={`Excluir ${connection.name}`}
+              aria-label={t("connections.deleteAria", {
+                name: connection.name,
+              })}
               onClick={() => onDelete(connection)}
             >
               <DeleteOutlineIcon fontSize="small" />
@@ -61,12 +68,14 @@ export function ConnectionCard({
         {connection.name}
       </h2>
       <p className="mt-1 text-xs text-muted">
-        Criada em {formatDateTime(connection.createdAt)}
+        {t("connections.createdAt", {
+          date: formatDateTime(connection.createdAt),
+        })}
       </p>
       <div className="mt-5 flex items-center justify-between border-t border-line pt-4">
         <Chip
           size="small"
-          label={deleting ? "Excluindo" : "Ativa"}
+          label={deleting ? t("status.deleting") : t("status.active")}
           className={
             deleting
               ? "bg-warning-soft text-warning"
@@ -79,7 +88,7 @@ export function ConnectionCard({
           disabled={deleting}
           onClick={() => onOpen(connection)}
         >
-          Ver contatos
+          {t("connections.viewContacts")}
         </Button>
       </div>
     </article>

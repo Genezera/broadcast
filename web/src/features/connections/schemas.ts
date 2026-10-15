@@ -1,11 +1,13 @@
 import { z } from "zod";
+import type { Translator } from "../../i18n/translate";
 
-export const connectionSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, "Informe o nome da conexão.")
-    .max(100, "Use no máximo 100 caracteres."),
-});
+export const connectionSchema = (t: Translator) =>
+  z.object({
+    name: z
+      .string()
+      .trim()
+      .min(1, t("connections.validation.nameRequired"))
+      .max(100, t("connections.validation.nameTooLong")),
+  });
 
-export type ConnectionFormValues = z.infer<typeof connectionSchema>;
+export type ConnectionFormValues = z.infer<ReturnType<typeof connectionSchema>>;

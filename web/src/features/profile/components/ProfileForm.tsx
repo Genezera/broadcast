@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Stack, TextField } from "@mui/material";
 import { useNotify } from "../../../app/providers/NotificationProvider";
 import { FormTextField } from "../../../components/ui/FormTextField";
-import { formatDateTime } from "../../../lib/dates";
+import { useI18n } from "../../../i18n/I18nProvider";
+import { useRevalidateOnLanguage } from "../../../i18n/useRevalidateOnLanguage";
 import { getErrorMessage } from "../../../lib/errors";
 import { useCurrentUser } from "../../auth/AuthProvider";
 import { resolveDisplayName } from "../displayName";
@@ -14,26 +15,33 @@ import { useProfile } from "../ProfileProvider";
 
 /** Nome do cliente e dados da conta. O e-mail é só de leitura. */
 export function ProfileForm() {
+  const { t, formatDateTime } = useI18n();
   const user = useCurrentUser();
   const { profile } = useProfile();
   const notify = useNotify();
-  const currentName = resolveDisplayName(profile, user);
+  const currentName = resolveDisplayName(
+    profile,
+    user,
+    t("nav.defaultUserName"),
+  );
 
-  const { control, handleSubmit, reset, formState } =
+  const { control, handleSubmit, reset, trigger, formState } =
     useForm<ProfileFormValues>({
-      resolver: zodResolver(profileSchema),
+      resolver: zodResolver(profileSchema(t)),
       defaultValues: { name: currentName },
     });
 
   // Se o nome mudar por outro lado (outra aba), o formulário acompanha.
   useEffect(() => reset({ name: currentName }), [currentName, reset]);
 
+  useRevalidateOnLanguage({ trigger, formState });
+
   const submit = handleSubmit(async ({ name }) => {
     try {
       await updateProfileName(user, name);
-      notify.success("Nome atualizado.");
+      notify.success(t("profile.details.saved"));
     } catch (cause) {
-      notify.error(getErrorMessage(cause));
+      notify.error(getErrorMessage(cause, t));
     }
   });
 
@@ -43,21 +51,23 @@ export function ProfileForm() {
         <FormTextField
           control={control}
           name="name"
-          label="Nome"
+          label={t("profile.details.nameLabel")}
           fullWidth
           autoComplete="name"
           slotProps={{ htmlInput: { maxLength: 60 } }}
         />
         <TextField
-          label="E-mail de acesso"
+          label={t("profile.details.emailLabel")}
           value={user.email ?? ""}
           fullWidth
           disabled
-          helperText="O e-mail é o seu login e não pode ser alterado aqui."
+          helperText={t("profile.details.emailHint")}
         />
         {profile?.createdAt && (
           <p className="text-sm text-muted">
-            Conta criada em {formatDateTime(profile.createdAt)}
+            {t("profile.details.createdAt", {
+              date: formatDateTime(profile.createdAt),
+            })}
           </p>
         )}
         <div>
@@ -66,7 +76,9 @@ export function ProfileForm() {
             variant="contained"
             disabled={formState.isSubmitting || !formState.isDirty}
           >
-            {formState.isSubmitting ? "Salvando..." : "Salvar nome"}
+            {formState.isSubmitting
+              ? t("common.saving")
+              : t("profile.details.save")}
           </Button>
         </div>
       </Stack>

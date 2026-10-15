@@ -2,7 +2,7 @@ import { Avatar, IconButton, Tooltip } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { Flag } from "../../../components/ui/Flag";
-import { formatDateTime } from "../../../lib/dates";
+import { useI18n } from "../../../i18n/I18nProvider";
 import { displayPhone, phoneCountry } from "../../../lib/phone";
 import type { Contact } from "../../../types";
 
@@ -30,22 +30,23 @@ function RowActions({
   onEdit: (contact: Contact) => void;
   onDelete: (contact: Contact) => void;
 }) {
+  const { t } = useI18n();
   return (
     <>
-      <Tooltip title="Editar">
+      <Tooltip title={t("common.edit")}>
         <IconButton
           size="small"
-          aria-label={`Editar ${contact.name}`}
+          aria-label={t("contacts.editAria", { name: contact.name })}
           onClick={() => onEdit(contact)}
         >
           <EditOutlinedIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      <Tooltip title="Excluir">
+      <Tooltip title={t("common.delete")}>
         <IconButton
           size="small"
           color="error"
-          aria-label={`Excluir ${contact.name}`}
+          aria-label={t("contacts.deleteAria", { name: contact.name })}
           onClick={() => onDelete(contact)}
         >
           <DeleteOutlineIcon fontSize="small" />
@@ -64,18 +65,25 @@ export function ContactsTable({
   onEdit,
   onDelete,
 }: ContactsTableProps) {
+  const { t, formatDateTime } = useI18n();
   return (
     <>
       <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-left">
           <thead className="bg-surface-muted text-xs uppercase tracking-wider text-muted">
             <tr>
-              <th className="px-6 py-4 font-bold">Nome</th>
-              <th className="px-6 py-4 font-bold">Telefone</th>
-              <th className="hidden px-6 py-4 font-bold lg:table-cell">
-                Cadastro
+              <th className="px-6 py-4 font-bold">
+                {t("contacts.table.name")}
               </th>
-              <th className="px-6 py-4 text-right font-bold">Ações</th>
+              <th className="px-6 py-4 font-bold">
+                {t("contacts.table.phone")}
+              </th>
+              <th className="hidden px-6 py-4 font-bold lg:table-cell">
+                {t("contacts.table.createdAt")}
+              </th>
+              <th className="px-6 py-4 text-right font-bold">
+                {t("contacts.table.actions")}
+              </th>
             </tr>
           </thead>
           <tbody>

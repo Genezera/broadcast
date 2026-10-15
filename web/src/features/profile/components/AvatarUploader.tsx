@@ -3,6 +3,7 @@ import { Button, CircularProgress } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import { useNotify } from "../../../app/providers/NotificationProvider";
+import { useI18n } from "../../../i18n/I18nProvider";
 import { getErrorMessage } from "../../../lib/errors";
 import { fileToAvatarDataUrl, validateImageFile } from "../../../lib/image";
 import { useCurrentUser } from "../../auth/AuthProvider";
@@ -12,6 +13,7 @@ import { UserAvatar } from "./UserAvatar";
 
 /** Foto grande com os botões de trocar e remover. */
 export function AvatarUploader() {
+  const { t } = useI18n();
   const user = useCurrentUser();
   const { profile } = useProfile();
   const notify = useNotify();
@@ -24,7 +26,7 @@ export function AvatarUploader() {
       await updateProfilePhoto(user.uid, photoData);
       notify.success(message);
     } catch (cause) {
-      notify.error(getErrorMessage(cause));
+      notify.error(getErrorMessage(cause, t));
     } finally {
       setBusy(false);
     }
@@ -34,13 +36,17 @@ export function AvatarUploader() {
     if (!file) return;
     const problem = validateImageFile(file);
     if (problem) {
-      notify.error(problem);
+      notify.error(
+        problem === "type"
+          ? t("profile.photo.invalidType")
+          : t("profile.photo.tooBig"),
+      );
       return;
     }
     try {
-      await save(await fileToAvatarDataUrl(file), "Foto atualizada.");
+      await save(await fileToAvatarDataUrl(file), t("profile.photo.updated"));
     } catch {
-      notify.error("Não foi possível ler essa imagem. Tente outra.");
+      notify.error(t("profile.photo.unreadable"));
     }
   };
 
@@ -62,20 +68,22 @@ export function AvatarUploader() {
             disabled={busy}
             onClick={() => input.current?.click()}
           >
-            {profile?.photoData ? "Trocar foto" : "Adicionar foto"}
+            {profile?.photoData
+              ? t("profile.photo.change")
+              : t("profile.photo.add")}
           </Button>
           {profile?.photoData && (
             <Button
               color="error"
               startIcon={<DeleteOutlineIcon />}
               disabled={busy}
-              onClick={() => save(null, "Foto removida.")}
+              onClick={() => save(null, t("profile.photo.removed"))}
             >
-              Remover
+              {t("profile.photo.remove")}
             </Button>
           )}
         </div>
-        <p className="text-xs text-muted">JPG, PNG ou WebP, até 5 MB.</p>
+        <p className="text-xs text-muted">{t("profile.photo.hint")}</p>
       </div>
       <input
         ref={input}

@@ -1,3 +1,4 @@
+import { useT } from "../../i18n/I18nProvider";
 import {
   Button,
   Dialog,
@@ -21,11 +22,12 @@ export function ConfirmDialog({
   open,
   title,
   description,
-  confirmLabel = "Excluir",
+  confirmLabel,
   busy = false,
   onConfirm,
   onClose,
 }: ConfirmDialogProps) {
+  const t = useT();
   return (
     <Dialog
       open={open}
@@ -39,7 +41,7 @@ export function ConfirmDialog({
       </DialogContent>
       <DialogActions sx={{ p: 2.5 }}>
         <Button onClick={onClose} disabled={busy}>
-          Cancelar
+          {t("common.cancel")}
         </Button>
         <Button
           color="error"
@@ -47,7 +49,7 @@ export function ConfirmDialog({
           onClick={onConfirm}
           disabled={busy}
         >
-          {busy ? "Excluindo..." : confirmLabel}
+          {busy ? t("common.deleting") : (confirmLabel ?? t("common.delete"))}
         </Button>
       </DialogActions>
     </Dialog>

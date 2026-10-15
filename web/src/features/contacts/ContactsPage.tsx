@@ -15,6 +15,7 @@ import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { ListSkeleton } from "../../components/ui/ListSkeleton";
 import { PageHeader } from "../../components/ui/PageHeader";
+import { useI18n } from "../../i18n/I18nProvider";
 import { getErrorMessage } from "../../lib/errors";
 import type { Contact } from "../../types";
 import { useCurrentUser } from "../auth/AuthProvider";
@@ -26,6 +27,7 @@ import { useContacts } from "./hooks/useContacts";
 import { deleteContact } from "./services/contactsService";
 
 export function ContactsPage() {
+  const { t } = useI18n();
   const user = useCurrentUser();
   const connection = useScopedConnection();
   const notify = useNotify();
@@ -50,10 +52,10 @@ export function ContactsPage() {
     setDeleting(true);
     try {
       await deleteContact(deleteTarget.id);
-      notify.success("Contato excluído.");
+      notify.success(t("contacts.deleted"));
       setDeleteTarget(null);
     } catch (cause) {
-      notify.error(getErrorMessage(cause));
+      notify.error(getErrorMessage(cause, t));
     } finally {
       setDeleting(false);
     }
@@ -65,15 +67,15 @@ export function ContactsPage() {
       startIcon={<AddIcon />}
       onClick={() => setDialogTarget("new")}
     >
-      Adicionar contato
+      {t("contacts.add")}
     </Button>
   );
 
   return (
     <>
       <PageHeader
-        title="Contatos"
-        description="Gerencie as pessoas de cada conexão."
+        title={t("contacts.title")}
+        description={t("contacts.subtitle")}
         actions={
           <>
             <ConnectionSelect section="contacts" />
@@ -83,7 +85,7 @@ export function ContactsPage() {
                 startIcon={<AddIcon />}
                 onClick={() => setDialogTarget("new")}
               >
-                Novo contato
+                {t("contacts.new")}
               </Button>
             )}
           </>
@@ -93,14 +95,17 @@ export function ContactsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 p-5">
           <div>
             <Typography variant="h6" component="h2">
-              Lista de contatos
+              {t("contacts.listTitle")}
             </Typography>
             <Typography color="text.secondary" fontSize={13}>
-              {contacts.length} contato(s) em {connection.name}
+              {t("contacts.count", {
+                count: contacts.length,
+                connection: connection.name,
+              })}
             </Typography>
           </div>
           <TextField
-            placeholder="Buscar por nome ou telefone"
+            placeholder={t("contacts.searchPlaceholder")}
             sx={{ width: { xs: "100%", sm: 280 } }}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -112,7 +117,7 @@ export function ContactsPage() {
                   </InputAdornment>
                 ),
               },
-              htmlInput: { "aria-label": "Buscar contato" },
+              htmlInput: { "aria-label": t("contacts.searchAria") },
             }}
           />
         </div>
@@ -127,15 +132,15 @@ export function ContactsPage() {
         ) : contacts.length === 0 ? (
           <EmptyState
             icon={<PeopleOutlineIcon sx={{ fontSize: 38 }} />}
-            title="Nenhum contato cadastrado"
-            description="Adicione contatos para começar a enviar mensagens."
+            title={t("contacts.emptyTitle")}
+            description={t("contacts.emptyText")}
             action={addAction}
           />
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={<SearchIcon sx={{ fontSize: 38 }} />}
-            title="Nenhum resultado"
-            description="Tente outro nome ou telefone."
+            title={t("contacts.noResultsTitle")}
+            description={t("contacts.noResultsText")}
           />
         ) : (
           <ContactsTable
@@ -154,8 +159,10 @@ export function ContactsPage() {
       />
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Excluir contato"
-        description={`Deseja excluir ${deleteTarget?.name}? As mensagens já criadas continuam com o registro dos destinatários.`}
+        title={t("contacts.deleteTitle")}
+        description={t("contacts.deleteConfirm", {
+          name: deleteTarget?.name ?? "",
+        })}
         busy={deleting}
         onConfirm={confirmDelete}
         onClose={() => setDeleteTarget(null)}

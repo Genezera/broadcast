@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Button, Typography } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { PageHeader } from "../../components/ui/PageHeader";
+import { useI18n } from "../../i18n/I18nProvider";
 import { signOutUser } from "../auth/authService";
 import { AvatarUploader } from "./components/AvatarUploader";
 import { PasswordForm } from "./components/PasswordForm";
@@ -35,25 +36,26 @@ function Section({
 }
 
 export function ProfilePage() {
+  const { t } = useI18n();
   return (
     <>
       <PageHeader
-        title="Minha conta"
-        description="Gerencie seu perfil, sua foto e sua senha."
+        title={t("profile.title")}
+        description={t("profile.subtitle")}
       />
       <div className="grid gap-5 xl:grid-cols-2">
         <div className="flex flex-col gap-5">
           <Section
             index={0}
-            title="Foto"
-            description="Aparece no menu e no cabeçalho."
+            title={t("profile.photo.title")}
+            description={t("profile.photo.text")}
           >
             <AvatarUploader />
           </Section>
           <Section
             index={1}
-            title="Perfil"
-            description="Como você é identificado no sistema."
+            title={t("profile.details.title")}
+            description={t("profile.details.text")}
           >
             <ProfileForm />
           </Section>
@@ -61,15 +63,15 @@ export function ProfilePage() {
         <div className="flex flex-col gap-5">
           <Section
             index={2}
-            title="Segurança"
-            description="Escolha uma senha forte e diferente das outras que você usa."
+            title={t("profile.security.title")}
+            description={t("profile.security.text")}
           >
             <PasswordForm />
           </Section>
           <Section
             index={3}
-            title="Sessão"
-            description="Encerra o acesso neste dispositivo."
+            title={t("profile.session.title")}
+            description={t("profile.session.text")}
           >
             <Button
               variant="outlined"
@@ -77,7 +79,7 @@ export function ProfilePage() {
               startIcon={<LogoutIcon />}
               onClick={signOutUser}
             >
-              Sair da conta
+              {t("profile.session.logout")}
             </Button>
           </Section>
         </div>

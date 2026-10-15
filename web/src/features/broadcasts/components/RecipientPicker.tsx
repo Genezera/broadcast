@@ -1,4 +1,5 @@
 import { Checkbox, FormHelperText } from "@mui/material";
+import { useI18n } from "../../../i18n/I18nProvider";
 import { displayPhone } from "../../../lib/phone";
 import type { Recipient } from "../../../types";
 
@@ -18,6 +19,7 @@ export function RecipientPicker({
   error,
   onChange,
 }: RecipientPickerProps) {
+  const { t } = useI18n();
   const allSelected = choices.length > 0 && value.length === choices.length;
 
   const toggle = (id: string) =>
@@ -31,9 +33,9 @@ export function RecipientPicker({
     <div>
       <div className="mb-2 flex items-center justify-between">
         <p className="text-sm font-bold">
-          Destinatários{" "}
+          {t("broadcasts.dialog.recipients")}{" "}
           <span className="font-normal text-muted">
-            ({value.length} selecionado(s))
+            {t("broadcasts.dialog.selected", { count: value.length })}
           </span>
         </p>
         {choices.length > 1 && (
@@ -42,7 +44,9 @@ export function RecipientPicker({
             className="cursor-pointer text-sm font-bold text-brand hover:underline"
             onClick={toggleAll}
           >
-            {allSelected ? "Limpar seleção" : "Selecionar todos"}
+            {allSelected
+              ? t("broadcasts.dialog.clearSelection")
+              : t("broadcasts.dialog.selectAll")}
           </button>
         )}
       </div>
@@ -51,7 +55,7 @@ export function RecipientPicker({
       >
         {choices.length === 0 ? (
           <p className="p-4 text-sm text-muted">
-            Nenhum contato nesta conexão.
+            {t("broadcasts.dialog.noContacts")}
           </p>
         ) : (
           choices.map((choice) => (
@@ -66,7 +70,8 @@ export function RecipientPicker({
               />
               <span className="flex-1 text-sm font-semibold">
                 {choice.name}
-                {removedIds.has(choice.id) && " (removido)"}
+                {removedIds.has(choice.id) &&
+                  ` ${t("broadcasts.dialog.removed")}`}
               </span>
               <span className="text-xs text-muted">
                 {displayPhone(choice.phone)}

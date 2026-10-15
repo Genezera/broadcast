@@ -8,6 +8,7 @@ import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { CardGridSkeleton } from "../../components/ui/ListSkeleton";
 import { PageHeader } from "../../components/ui/PageHeader";
+import { useI18n } from "../../i18n/I18nProvider";
 import { getErrorMessage } from "../../lib/errors";
 import type { Connection } from "../../types";
 import { useCurrentUser } from "../auth/AuthProvider";
@@ -17,6 +18,7 @@ import { useConnectionsContext } from "./ConnectionsProvider";
 import { deleteConnection } from "./services/connectionsService";
 
 export function ConnectionsPage() {
+  const { t } = useI18n();
   const user = useCurrentUser();
   const navigate = useNavigate();
   const notify = useNotify();
@@ -33,10 +35,10 @@ export function ConnectionsPage() {
     setDeleting(true);
     try {
       await deleteConnection(deleteTarget.id);
-      notify.success("Conexão excluída.");
+      notify.success(t("connections.deleted"));
       setDeleteTarget(null);
     } catch (cause) {
-      notify.error(getErrorMessage(cause));
+      notify.error(getErrorMessage(cause, t));
     } finally {
       setDeleting(false);
     }
@@ -45,15 +47,15 @@ export function ConnectionsPage() {
   return (
     <>
       <PageHeader
-        title="Conexões"
-        description="Organize seus canais de comunicação."
+        title={t("connections.title")}
+        description={t("connections.subtitle")}
         actions={
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setDialogTarget("new")}
           >
-            Nova conexão
+            {t("connections.new")}
           </Button>
         }
       />
@@ -68,15 +70,15 @@ export function ConnectionsPage() {
         ) : connections.length === 0 ? (
           <EmptyState
             icon={<HubOutlinedIcon sx={{ fontSize: 38 }} />}
-            title="Sua primeira conexão começa aqui"
-            description="Crie uma conexão para organizar contatos e mensagens."
+            title={t("connections.emptyTitle")}
+            description={t("connections.emptyText")}
             action={
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => setDialogTarget("new")}
               >
-                Criar conexão
+                {t("connections.create")}
               </Button>
             }
           />
@@ -103,8 +105,10 @@ export function ConnectionsPage() {
       />
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Excluir conexão"
-        description={`Deseja excluir "${deleteTarget?.name}"? Todos os contatos e mensagens desta conexão também serão excluídos. Esta ação não pode ser desfeita.`}
+        title={t("connections.deleteTitle")}
+        description={t("connections.deleteConfirm", {
+          name: deleteTarget?.name ?? "",
+        })}
         busy={deleting}
         onConfirm={confirmDelete}
         onClose={() => setDeleteTarget(null)}

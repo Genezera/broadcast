@@ -16,6 +16,7 @@ import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { ListSkeleton } from "../../components/ui/ListSkeleton";
 import { PageHeader } from "../../components/ui/PageHeader";
+import { useI18n } from "../../i18n/I18nProvider";
 import { getErrorMessage } from "../../lib/errors";
 import type { Message, MessageStatus } from "../../types";
 import { useCurrentUser } from "../auth/AuthProvider";
@@ -33,6 +34,7 @@ type Filter = "all" | MessageStatus;
 const PAGE_SIZE = 20;
 
 export function BroadcastsPage() {
+  const { t } = useI18n();
   const user = useCurrentUser();
   const connection = useScopedConnection();
   const notify = useNotify();
@@ -72,10 +74,10 @@ export function BroadcastsPage() {
     setDeleting(true);
     try {
       await deleteMessage(deleteTarget.id);
-      notify.success("Mensagem excluída.");
+      notify.success(t("broadcasts.deleted"));
       setDeleteTarget(null);
     } catch (cause) {
-      notify.error(getErrorMessage(cause));
+      notify.error(getErrorMessage(cause, t));
     } finally {
       setDeleting(false);
     }
@@ -88,15 +90,15 @@ export function BroadcastsPage() {
       startIcon={<AddIcon />}
       onClick={() => setDialogTarget("new")}
     >
-      Nova mensagem
+      {t("broadcasts.new")}
     </Button>
   );
 
   return (
     <>
       <PageHeader
-        title="Broadcast"
-        description="Crie, programe e acompanhe suas mensagens."
+        title={t("broadcasts.title")}
+        description={t("broadcasts.subtitle")}
         actions={
           <>
             <ConnectionSelect section="broadcasts" />
@@ -109,15 +111,15 @@ export function BroadcastsPage() {
         <div className="surface">
           <EmptyState
             icon={<PeopleOutlineIcon sx={{ fontSize: 38 }} />}
-            title="Adicione seus contatos"
-            description="Cadastre pelo menos um contato para criar uma mensagem."
+            title={t("broadcasts.addContactsTitle")}
+            description={t("broadcasts.addContactsText")}
             action={
               <Button
                 component={Link}
                 to={`/connections/${connection.id}/contacts`}
                 variant="contained"
               >
-                Adicionar contato
+                {t("broadcasts.addContact")}
               </Button>
             }
           />
@@ -127,17 +129,20 @@ export function BroadcastsPage() {
           <div className="flex flex-wrap items-center justify-between gap-3 p-5">
             <div>
               <Typography variant="h6" component="h2">
-                Mensagens
+                {t("broadcasts.listTitle")}
               </Typography>
               <Typography color="text.secondary" fontSize={13}>
-                {counts.all ?? "–"} mensagem(ns) em {connection.name}
+                {t("broadcasts.count", {
+                  count: counts.all ?? 0,
+                  connection: connection.name,
+                })}
               </Typography>
             </div>
             <ToggleButtonGroup
               exclusive
               size="small"
               value={filter}
-              aria-label="Filtrar mensagens por status"
+              aria-label={t("broadcasts.filterAria")}
               sx={{
                 width: { xs: "100%", sm: "auto" },
                 "& .MuiToggleButton-root": {
@@ -150,13 +155,15 @@ export function BroadcastsPage() {
               onChange={(_, value: Filter | null) => value && setFilter(value)}
             >
               <ToggleButton value="all">
-                Todas ({counts.all ?? "–"})
+                {t("broadcasts.filterAll", { count: counts.all ?? "–" })}
               </ToggleButton>
               <ToggleButton value="sent">
-                Enviadas ({counts.sent ?? "–"})
+                {t("broadcasts.filterSent", { count: counts.sent ?? "–" })}
               </ToggleButton>
               <ToggleButton value="scheduled">
-                Agendadas ({counts.scheduled ?? "–"})
+                {t("broadcasts.filterScheduled", {
+                  count: counts.scheduled ?? "–",
+                })}
               </ToggleButton>
             </ToggleButtonGroup>
           </div>
@@ -173,13 +180,13 @@ export function BroadcastsPage() {
               icon={<CampaignOutlinedIcon sx={{ fontSize: 38 }} />}
               title={
                 filter === "all"
-                  ? "Nenhuma mensagem criada"
-                  : "Nenhuma mensagem neste filtro"
+                  ? t("broadcasts.emptyTitle")
+                  : t("broadcasts.emptyFilterTitle")
               }
               description={
                 filter === "all"
-                  ? "Crie uma mensagem e escolha entre enviar agora ou agendar."
-                  : "Suas mensagens aparecerão aqui quando tiverem este status."
+                  ? t("broadcasts.emptyText")
+                  : t("broadcasts.emptyFilterText")
               }
               action={filter === "all" ? createAction : undefined}
             />
@@ -202,7 +209,7 @@ export function BroadcastsPage() {
                     disabled={loading}
                     onClick={() => setMax((current) => current + PAGE_SIZE)}
                   >
-                    {loading ? "Carregando..." : "Carregar mais"}
+                    {loading ? t("common.loadingMore") : t("common.loadMore")}
                   </Button>
                 </div>
               )}
@@ -219,11 +226,11 @@ export function BroadcastsPage() {
       />
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Excluir mensagem"
+        title={t("broadcasts.deleteTitle")}
         description={
           deleteTarget?.status === "scheduled"
-            ? "Esta mensagem está agendada e não será enviada se for excluída."
-            : "O registro desta mensagem será removido do histórico."
+            ? t("broadcasts.deleteScheduled")
+            : t("broadcasts.deleteSent")
         }
         busy={deleting}
         onConfirm={confirmDelete}

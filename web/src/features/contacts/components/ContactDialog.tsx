@@ -13,6 +13,8 @@ import { useNotify } from "../../../app/providers/NotificationProvider";
 import { useResponsiveDialog } from "../../../components/ui/useResponsiveDialog";
 import { FormPhoneField } from "../../../components/ui/FormPhoneField";
 import { FormTextField } from "../../../components/ui/FormTextField";
+import { useI18n } from "../../../i18n/I18nProvider";
+import { useRevalidateOnLanguage } from "../../../i18n/useRevalidateOnLanguage";
 import { getErrorMessage } from "../../../lib/errors";
 import type { Contact } from "../../../types";
 import { contactSchema, type ContactFormValues } from "../schemas";
@@ -32,12 +34,13 @@ export function ContactDialog({
   connectionId,
   onClose,
 }: ContactDialogProps) {
+  const { t } = useI18n();
   const notify = useNotify();
   const responsiveDialog = useResponsiveDialog();
   const editing = target && target !== "new" ? target : null;
-  const { control, handleSubmit, reset, formState } =
+  const { control, handleSubmit, reset, trigger, formState } =
     useForm<ContactFormValues>({
-      resolver: zodResolver(contactSchema),
+      resolver: zodResolver(contactSchema(t)),
       defaultValues: { name: "", phone: "" },
     });
 
@@ -47,14 +50,16 @@ export function ContactDialog({
     }
   }, [target, editing, reset]);
 
+  useRevalidateOnLanguage({ trigger, formState });
+
   const submit = handleSubmit(async (values) => {
     try {
       if (editing) await updateContact(editing.id, values);
       else await createContact({ ...values, tenantId, connectionId });
-      notify.success(editing ? "Contato atualizado." : "Contato criado.");
+      notify.success(editing ? t("contacts.updated") : t("contacts.created"));
       onClose();
     } catch (cause) {
-      notify.error(getErrorMessage(cause));
+      notify.error(getErrorMessage(cause, t));
     }
   });
 
@@ -71,30 +76,38 @@ export function ContactDialog({
         noValidate
         className="flex min-h-0 flex-1 flex-col"
       >
-        <DialogTitle>{editing ? "Editar contato" : "Novo contato"}</DialogTitle>
+        <DialogTitle>
+          {editing
+            ? t("contacts.dialog.editTitle")
+            : t("contacts.dialog.newTitle")}
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <FormTextField
               control={control}
               name="name"
-              label="Nome"
+              label={t("contacts.dialog.nameLabel")}
               fullWidth
               autoFocus
               slotProps={{ htmlInput: { maxLength: 100 } }}
             />
-            <FormPhoneField control={control} name="phone" label="Telefone" />
+            <FormPhoneField
+              control={control}
+              name="phone"
+              label={t("contacts.dialog.phoneLabel")}
+            />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
           <Button onClick={onClose} disabled={formState.isSubmitting}>
-            Cancelar
+            {t("common.cancel")}
           </Button>
           <Button
             type="submit"
             variant="contained"
             disabled={formState.isSubmitting}
           >
-            {formState.isSubmitting ? "Salvando..." : "Salvar"}
+            {formState.isSubmitting ? t("common.saving") : t("common.save")}
           </Button>
         </DialogActions>
       </form>

@@ -2,11 +2,13 @@ import { IconButton, Tooltip } from "@mui/material";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import { useThemeMode } from "../../app/providers/ThemeModeProvider";
+import { useT } from "../../i18n/I18nProvider";
 
 /** Alterna claro/escuro. O sol e a lua trocam girando (ver .theme-icon). */
 export function ThemeToggle({ className = "" }: { className?: string }) {
   const { mode, toggle } = useThemeMode();
-  const label = mode === "dark" ? "Ativar modo claro" : "Ativar modo escuro";
+  const t = useT();
+  const label = mode === "dark" ? t("theme.toLight") : t("theme.toDark");
 
   return (
     <Tooltip title={label}>

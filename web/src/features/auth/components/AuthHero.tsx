@@ -1,6 +1,8 @@
 import { BrandMark } from "../../../components/ui/BrandMark";
+import { useT } from "../../../i18n/I18nProvider";
 
 export function AuthHero() {
+  const t = useT();
   return (
     <div className="relative hidden flex-col justify-between overflow-hidden bg-[#211d49] p-12 text-white lg:flex xl:p-20">
       <div className="animate-float absolute -right-40 top-20 h-[600px] w-[600px] rounded-full bg-brand opacity-30 blur-[130px]" />
@@ -13,21 +15,19 @@ export function AuthHero() {
       >
         <div className="mb-7 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold text-[#d8d4ff]">
           <span className="h-2 w-2 rounded-full bg-[#8dffcb]" />
-          Comunicação em um só lugar
+          {t("auth.hero.badge")}
         </div>
         <h2 className="font-display text-5xl font-extrabold leading-tight tracking-tight xl:text-6xl">
-          Mensagens certas.
+          {t("auth.hero.title1")}
           <br />
-          <span className="text-[#a99fff]">Pessoas certas.</span>
+          <span className="text-[#a99fff]">{t("auth.hero.title2")}</span>
         </h2>
         <p className="mt-6 text-lg leading-relaxed text-[#c2bfdd]">
-          Organize conexões, gerencie contatos e programe suas comunicações com
-          clareza e simplicidade.
+          {t("auth.hero.text")}
         </p>
       </div>
       <p className="relative text-sm text-[#a5a1c3]">
-        © {new Date().getFullYear()} Broadcast. Uma experiência simples para sua
-        comunicação.
+        {t("auth.hero.footer", { year: new Date().getFullYear() })}
       </p>
     </div>
   );

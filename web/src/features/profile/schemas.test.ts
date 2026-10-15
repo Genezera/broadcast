@@ -1,18 +1,24 @@
 import { describe, expect, it } from "vitest";
+import { translators } from "../../i18n/translate";
 import { changePasswordSchema, profileSchema } from "./schemas";
 
-const issues = (schema: typeof changePasswordSchema, values: unknown) => {
+const t = translators.pt;
+
+const issues = (
+  schema: ReturnType<typeof changePasswordSchema>,
+  values: unknown,
+) => {
   const result = schema.safeParse(values);
   return result.success ? [] : result.error.issues.map((item) => item.message);
 };
 
 describe("profileSchema", () => {
   it("trims and validates the name", () => {
-    expect(profileSchema.parse({ name: "  Ana Souza  " }).name).toBe(
+    expect(profileSchema(t).parse({ name: "  Ana Souza  " }).name).toBe(
       "Ana Souza",
     );
-    expect(profileSchema.safeParse({ name: "A" }).success).toBe(false);
-    expect(profileSchema.safeParse({ name: "x".repeat(61) }).success).toBe(
+    expect(profileSchema(t).safeParse({ name: "A" }).success).toBe(false);
+    expect(profileSchema(t).safeParse({ name: "x".repeat(61) }).success).toBe(
       false,
     );
   });
@@ -26,25 +32,25 @@ describe("changePasswordSchema", () => {
   };
 
   it("accepts a valid change", () => {
-    expect(issues(changePasswordSchema, valid)).toEqual([]);
+    expect(issues(changePasswordSchema(t), valid)).toEqual([]);
   });
 
   it("requires the confirmation to match", () => {
     expect(
-      issues(changePasswordSchema, { ...valid, confirmPassword: "outra" }),
+      issues(changePasswordSchema(t), { ...valid, confirmPassword: "outra" }),
     ).toContain("As senhas não conferem.");
   });
 
   it("requires a different and long enough new password", () => {
     expect(
-      issues(changePasswordSchema, {
+      issues(changePasswordSchema(t), {
         ...valid,
         newPassword: "senha-atual",
         confirmPassword: "senha-atual",
       }),
     ).toContain("A nova senha deve ser diferente da atual.");
     expect(
-      issues(changePasswordSchema, {
+      issues(changePasswordSchema(t), {
         ...valid,
         newPassword: "123",
         confirmPassword: "123",

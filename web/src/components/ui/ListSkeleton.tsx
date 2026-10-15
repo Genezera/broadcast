@@ -1,9 +1,15 @@
 import { Skeleton } from "@mui/material";
+import { useT } from "../../i18n/I18nProvider";
 
 /** Linhas de carregamento (efeito shimmer) no lugar de listas e tabelas. */
 export function ListSkeleton({ rows = 4 }: { rows?: number }) {
+  const t = useT();
   return (
-    <div className="divide-y divide-line" role="status" aria-label="Carregando">
+    <div
+      className="divide-y divide-line"
+      role="status"
+      aria-label={t("common.loading")}
+    >
       {Array.from({ length: rows }, (_, index) => (
         <div
           key={index}
@@ -24,11 +30,12 @@ export function ListSkeleton({ rows = 4 }: { rows?: number }) {
 
 /** Cards de carregamento para a grade de conexões. */
 export function CardGridSkeleton({ cards = 3 }: { cards?: number }) {
+  const t = useT();
   return (
     <div
       className="grid gap-3 p-3 sm:p-4 md:grid-cols-2 xl:grid-cols-3"
       role="status"
-      aria-label="Carregando"
+      aria-label={t("common.loading")}
     >
       {Array.from({ length: cards }, (_, index) => (
         <div

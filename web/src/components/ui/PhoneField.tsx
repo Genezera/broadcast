@@ -19,6 +19,7 @@ import {
   toInternational,
   type CountryCode,
 } from "../../lib/phone";
+import { useI18n } from "../../i18n/I18nProvider";
 import { Flag } from "./Flag";
 
 const PLACEHOLDERS: Partial<Record<CountryCode, string>> = {
@@ -56,6 +57,7 @@ export function PhoneField({
   helperText,
   autoFocus,
 }: PhoneFieldProps) {
+  const { t, locale } = useI18n();
   const [country, setCountry] = useState<CountryCode>(
     () => splitPhone(value).country,
   );
@@ -114,7 +116,7 @@ export function PhoneField({
         inputRef={inputRef}
         onBlur={onBlur}
         onChange={(event) => handleInput(event.target.value)}
-        placeholder={PLACEHOLDERS[country] ?? "Número de telefone"}
+        placeholder={PLACEHOLDERS[country] ?? t("phone.placeholderGeneric")}
         slotProps={{
           htmlInput: { inputMode: "tel", autoComplete: "tel-national" },
           input: {
@@ -122,7 +124,10 @@ export function PhoneField({
               <InputAdornment position="start" sx={{ mr: 0.5 }}>
                 <ButtonBase
                   onClick={(event) => setMenuAnchor(event.currentTarget)}
-                  aria-label={`País: ${countryName(country)}, +${callingCode(country)}. Alterar país`}
+                  aria-label={t("phone.changeCountry", {
+                    country: countryName(country, locale),
+                    code: callingCode(country),
+                  })}
                   aria-haspopup="listbox"
                   sx={{
                     gap: 0.75,
@@ -160,7 +165,7 @@ export function PhoneField({
             sx={{ gap: 1.5 }}
           >
             <Flag country={item} />
-            <ListItemText primary={countryName(item)} />
+            <ListItemText primary={countryName(item, locale)} />
             <span className="text-sm text-muted">+{callingCode(item)}</span>
           </MenuItem>
         ))}

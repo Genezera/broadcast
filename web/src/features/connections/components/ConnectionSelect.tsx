@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { MenuItem, TextField } from "@mui/material";
+import { useI18n } from "../../../i18n/I18nProvider";
 import { useConnectionsContext } from "../ConnectionsProvider";
 import { useScopedConnection } from "./ConnectionScope";
 
@@ -9,6 +10,7 @@ export function ConnectionSelect({
 }: {
   section: "contacts" | "broadcasts";
 }) {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const current = useScopedConnection();
   const { activeConnections } = useConnectionsContext();
@@ -22,7 +24,7 @@ export function ConnectionSelect({
       }
       className="min-w-0 flex-1 sm:flex-none"
       sx={{ minWidth: { sm: 190 } }}
-      slotProps={{ htmlInput: { "aria-label": "Selecionar conexão" } }}
+      slotProps={{ htmlInput: { "aria-label": t("connections.selectAria") } }}
     >
       {activeConnections.map((connection) => (
         <MenuItem key={connection.id} value={connection.id}>
