@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Alert,
   Button,
   CircularProgress,
+  Collapse,
   Divider,
   IconButton,
   InputAdornment,
@@ -32,6 +33,42 @@ import {
 } from "../schemas";
 import { AuthHero } from "./AuthHero";
 
+/**
+ * Parte do formulário que aparece e some conforme o modo (login ou cadastro).
+ * Fica sempre montada e só abre/fecha com altura + fade; assim não herda a
+ * entrada em sequência da abertura do site, que tem atraso de mais de 600 ms.
+ */
+function Reveal({
+  show,
+  order,
+  timeout,
+  children,
+}: {
+  show: boolean;
+  /** Posição na entrada em sequência (só vale na abertura da página). */
+  order: number;
+  timeout?: number | { enter?: number; exit?: number };
+  children: ReactNode;
+}) {
+  return (
+    <Collapse
+      in={show}
+      timeout={timeout ?? 350}
+      style={{ ["--n" as string]: order }}
+    >
+      <div
+        className="pb-5 transition-[opacity,transform] duration-300 ease-out"
+        style={{
+          opacity: show ? 1 : 0,
+          transform: show ? "none" : "translateY(-6px)",
+        }}
+      >
+        {children}
+      </div>
+    </Collapse>
+  );
+}
+
 export function AuthPage() {
   const t = useT();
   const [registering, setRegistering] = useState(false);
@@ -46,11 +83,12 @@ export function AuthPage() {
     formState,
     getValues,
     trigger,
+    clearErrors,
     setError: setFieldError,
   } = useForm<AuthFormValues>({
     // O schema muda entre login e cadastro (a regra de senha é diferente).
     resolver: zodResolver(registering ? signUpSchema(t) : signInSchema(t)),
-    defaultValues: { name: "", email: "", password: "" },
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
   });
 
   useRevalidateOnLanguage({ trigger, formState });
@@ -70,6 +108,7 @@ export function AuthPage() {
 
   const toggleMode = () => {
     setRegistering((current) => !current);
+    clearErrors();
     setError(null);
     setResetSent(false);
   };
@@ -128,13 +167,13 @@ export function AuthPage() {
           <form
             onSubmit={submit}
             noValidate
-            className="stagger-children flex flex-col gap-5"
+            className="stagger-children flex flex-col"
             style={{
               ["--base" as string]: "650ms",
               ["--step" as string]: "150ms",
             }}
           >
-            {registering && (
+            <Reveal show={registering} order={0}>
               <FormTextField
                 control={control}
                 name="name"
@@ -151,95 +190,138 @@ export function AuthPage() {
                   },
                 }}
               />
-            )}
-            <FormTextField
-              control={control}
-              name="email"
-              label={t("auth.fields.email")}
-              type="email"
-              fullWidth
-              autoComplete="email"
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <MailOutlineIcon fontSize="small" color="disabled" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <FormTextField
-              control={control}
-              name="password"
-              label={t("auth.fields.password")}
-              type={showPassword ? "text" : "password"}
-              fullWidth
-              autoComplete={registering ? "new-password" : "current-password"}
-              helperText={
-                registering ? t("auth.signUp.passwordHint") : undefined
-              }
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LockOutlinedIcon fontSize="small" color="disabled" />
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        edge="end"
-                        size="small"
-                        aria-label={
-                          showPassword
-                            ? t("auth.fields.hidePassword")
-                            : t("auth.fields.showPassword")
-                        }
-                        onClick={() => setShowPassword((current) => !current)}
-                      >
-                        {showPassword ? (
-                          <VisibilityOffOutlinedIcon fontSize="small" />
-                        ) : (
-                          <VisibilityOutlinedIcon fontSize="small" />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            {!registering && (
+            </Reveal>
+            <div className="pb-5" style={{ ["--n" as string]: 0 }}>
+              <FormTextField
+                control={control}
+                name="email"
+                label={t("auth.fields.email")}
+                type="email"
+                fullWidth
+                autoComplete="email"
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <MailOutlineIcon fontSize="small" color="disabled" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </div>
+            <div
+              className={`transition-[padding] duration-300 ${registering ? "pb-5" : "pb-3"}`}
+              style={{ ["--n" as string]: 1 }}
+            >
+              <FormTextField
+                control={control}
+                name="password"
+                label={t("auth.fields.password")}
+                type={showPassword ? "text" : "password"}
+                fullWidth
+                autoComplete={registering ? "new-password" : "current-password"}
+                helperText={
+                  registering ? t("auth.signUp.passwordHint") : undefined
+                }
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockOutlinedIcon fontSize="small" color="disabled" />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          edge="end"
+                          size="small"
+                          aria-label={
+                            showPassword
+                              ? t("auth.fields.hidePassword")
+                              : t("auth.fields.showPassword")
+                          }
+                          onClick={() => setShowPassword((current) => !current)}
+                        >
+                          {showPassword ? (
+                            <VisibilityOffOutlinedIcon fontSize="small" />
+                          ) : (
+                            <VisibilityOutlinedIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </div>
+            <Reveal show={registering} order={1}>
+              <FormTextField
+                control={control}
+                name="confirmPassword"
+                label={t("auth.fields.confirmPassword")}
+                type={showPassword ? "text" : "password"}
+                fullWidth
+                autoComplete="new-password"
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockOutlinedIcon fontSize="small" color="disabled" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </Reveal>
+            <Reveal show={!registering} order={2}>
               <button
                 type="button"
-                className="-mt-2 cursor-pointer self-end text-sm font-bold text-brand hover:underline"
+                className="cursor-pointer text-sm font-bold text-brand hover:underline"
                 onClick={resetPassword}
               >
                 {t("auth.signIn.forgot")}
               </button>
-            )}
-            {error !== null && (
-              <Alert severity="error">{getErrorMessage(error, t)}</Alert>
-            )}
-            {resetSent && (
-              <Alert severity="success">{t("auth.signIn.resetSent")}</Alert>
-            )}
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              size="large"
-              disabled={formState.isSubmitting}
-              endIcon={
-                formState.isSubmitting ? (
-                  <CircularProgress size={18} color="inherit" />
-                ) : (
-                  <ArrowForwardIcon />
-                )
-              }
+            </Reveal>
+            {/* Avisos: abrem na hora (sem a espera da abertura) e somem sem atraso. */}
+            <Reveal
+              show={error !== null}
+              order={2}
+              timeout={{ enter: 250, exit: 0 }}
             >
-              {registering ? t("auth.signUp.submit") : t("auth.signIn.submit")}
-            </Button>
+              {error !== null && (
+                <Alert severity="error">{getErrorMessage(error, t)}</Alert>
+              )}
+            </Reveal>
+            <Reveal
+              show={resetSent}
+              order={2}
+              timeout={{ enter: 250, exit: 0 }}
+            >
+              {resetSent && (
+                <Alert severity="success">{t("auth.signIn.resetSent")}</Alert>
+              )}
+            </Reveal>
+            <div style={{ ["--n" as string]: 3 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                size="large"
+                disabled={formState.isSubmitting}
+                endIcon={
+                  formState.isSubmitting ? (
+                    <CircularProgress size={18} color="inherit" />
+                  ) : (
+                    <ArrowForwardIcon />
+                  )
+                }
+              >
+                {registering
+                  ? t("auth.signUp.submit")
+                  : t("auth.signIn.submit")}
+              </Button>
+            </div>
           </form>
 
           <div className="my-8 flex items-center gap-4">

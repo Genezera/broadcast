@@ -113,6 +113,7 @@ export const en: Dictionary = {
       password: "Password",
       showPassword: "Show password",
       hidePassword: "Hide password",
+      confirmPassword: "Confirm password",
     },
     or: "OR",
     hero: {
@@ -128,6 +129,8 @@ export const en: Dictionary = {
       nameRequired: "Enter your name.",
       nameTooLong: "Use at most 60 characters.",
       passwordRequired: "Enter your password.",
+      confirmRequired: "Confirm your password.",
+      mismatch: "The passwords don't match.",
       passwordShort: "The password must have at least 6 characters.",
     },
   },

@@ -5,6 +5,9 @@ const AUTH_KEYS: Record<string, TKey> = {
   "auth/invalid-email": "errors.auth.invalidEmail",
   "auth/weak-password": "errors.auth.weakPassword",
   "auth/invalid-credential": "errors.auth.invalidCredential",
+  // Versões antigas do Firebase devolvem estes códigos para e-mail ou senha errados.
+  "auth/wrong-password": "errors.auth.invalidCredential",
+  "auth/user-not-found": "errors.auth.invalidCredential",
   "auth/user-disabled": "errors.auth.userDisabled",
   "auth/requires-recent-login": "errors.auth.requiresRecentLogin",
   "auth/too-many-requests": "errors.auth.tooManyRequests",

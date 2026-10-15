@@ -117,6 +117,7 @@ export const pt = {
       password: "Senha",
       showPassword: "Mostrar senha",
       hidePassword: "Ocultar senha",
+      confirmPassword: "Confirmar senha",
     },
     or: "OU",
     hero: {
@@ -133,6 +134,8 @@ export const pt = {
       nameRequired: "Informe seu nome.",
       nameTooLong: "Use no máximo 60 caracteres.",
       passwordRequired: "Informe a senha.",
+      confirmRequired: "Confirme a senha.",
+      mismatch: "As senhas não conferem.",
       passwordShort: "A senha deve ter pelo menos 6 caracteres.",
     },
   },

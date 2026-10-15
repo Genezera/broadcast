@@ -80,4 +80,56 @@ describe("AuthPage", () => {
       await screen.findByText(/Se o e-mail estiver cadastrado/),
     ).toBeTruthy();
   });
+
+  it("asks to confirm the password when registering and blocks a mismatch", async () => {
+    renderPage();
+    await userEvent.click(screen.getByRole("button", { name: "Cadastre-se" }));
+    await userEvent.type(screen.getByLabelText("Nome"), "Ana Souza");
+    await userEvent.type(email(), "ana@exemplo.com");
+    await userEvent.type(password(), "segredo123");
+    await userEvent.type(
+      screen.getByLabelText("Confirmar senha"),
+      "segredo124",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Criar conta" }));
+    expect(await screen.findByText("As senhas não conferem.")).toBeTruthy();
+    expect(signUp).not.toHaveBeenCalled();
+  });
+
+  it("registers with name, e-mail and a confirmed password", async () => {
+    renderPage();
+    await userEvent.click(screen.getByRole("button", { name: "Cadastre-se" }));
+    await userEvent.type(screen.getByLabelText("Nome"), "Ana Souza");
+    await userEvent.type(email(), "ana@exemplo.com");
+    await userEvent.type(password(), "segredo123");
+    await userEvent.type(
+      screen.getByLabelText("Confirmar senha"),
+      "segredo123",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Criar conta" }));
+    await waitFor(() =>
+      expect(signUp).toHaveBeenCalledWith(
+        "ana@exemplo.com",
+        "segredo123",
+        "Ana Souza",
+      ),
+    );
+  });
+
+  it("shows the wrong-password message as soon as the sign-in fails", async () => {
+    vi.mocked(signIn).mockRejectedValueOnce({
+      code: "auth/invalid-credential",
+    });
+    renderPage();
+    await userEvent.type(email(), "ana@exemplo.com");
+    await userEvent.type(password(), "errada123");
+    await userEvent.click(screen.getByRole("button", { name: "Entrar" }));
+    expect(
+      await screen.findByText(
+        /e-mail ou senha incorretos/i,
+        {},
+        { timeout: 500 },
+      ),
+    ).toBeTruthy();
+  });
 });
