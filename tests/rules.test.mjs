@@ -346,3 +346,61 @@ test("message mutations are backend-only", async () => {
     }),
   );
 });
+
+test("notifications are readable and markable as read only by their owner, never created by the client", async () => {
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), "notifications", "alice-note"), {
+      tenantId: "alice",
+      type: "message_sent",
+      messageId: "alice-message",
+      connectionId: "alice-connection",
+      connectionName: "Alice",
+      recipientCount: 1,
+      scheduled: false,
+      bodyPreview: "Oi",
+      read: false,
+      createdAt: serverTimestamp(),
+    });
+  });
+
+  await assertSucceeds(getDoc(doc(alice, "notifications", "alice-note")));
+  await assertFails(getDoc(doc(bob, "notifications", "alice-note")));
+  // Consulta sem o filtro do tenant é recusada.
+  await assertFails(getDocs(collection(alice, "notifications")));
+  await assertSucceeds(
+    getDocs(
+      query(
+        collection(alice, "notifications"),
+        where("tenantId", "==", "alice"),
+      ),
+    ),
+  );
+
+  // O cliente só pode mudar `read`.
+  await assertSucceeds(
+    updateDoc(doc(alice, "notifications", "alice-note"), { read: true }),
+  );
+  await assertFails(
+    updateDoc(doc(alice, "notifications", "alice-note"), {
+      recipientCount: 99,
+    }),
+  );
+  await assertFails(
+    updateDoc(doc(alice, "notifications", "alice-note"), { read: "sim" }),
+  );
+  await assertFails(
+    updateDoc(doc(bob, "notifications", "alice-note"), { read: true }),
+  );
+
+  // Criar notificação (inclusive para si) é coisa só do backend.
+  await assertFails(
+    setDoc(doc(alice, "notifications", "forged"), {
+      tenantId: "alice",
+      type: "message_sent",
+      read: false,
+    }),
+  );
+
+  await assertFails(deleteDoc(doc(bob, "notifications", "alice-note")));
+  await assertSucceeds(deleteDoc(doc(alice, "notifications", "alice-note")));
+});

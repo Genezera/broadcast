@@ -128,5 +128,16 @@ service cloud.firestore {
       allow get, list: if owns(resource.data);
       allow write: if false;
     }
+
+    // Notificações ("sua mensagem foi enviada"): criadas só pelas functions.
+    // O cliente lê, marca como lida (único campo que pode mudar) e apaga.
+    match /notifications/{id} {
+      allow get, list: if owns(resource.data);
+      allow create: if false;
+      allow update: if owns(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+        && request.resource.data.read is bool;
+      allow delete: if owns(resource.data);
+    }
   }
 }

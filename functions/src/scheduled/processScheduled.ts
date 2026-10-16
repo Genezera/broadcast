@@ -4,6 +4,8 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as logger from "firebase-functions/logger";
 import { LIMITS, REGION } from "../config";
 import { collections, db } from "../firebase";
+import { writeSentNotification } from "../shared/notifications";
+import type { Recipient } from "../shared/types";
 
 /**
  * Marca a mensagem como enviada se, no momento da transação, ela ainda estiver
@@ -24,6 +26,21 @@ export const sendIfDue = (ref: DocumentReference): Promise<boolean> =>
     ) {
       return false;
     }
+    // Leio a conexão antes de qualquer escrita (regra das transações) só para
+    // pôr o nome na notificação; se ela já sumiu, o nome fica vazio.
+    const connectionId = current.get("connectionId") as string;
+    const connection = await transaction.get(
+      collections.connections.doc(connectionId),
+    );
+    writeSentNotification(transaction, {
+      tenantId: current.get("tenantId") as string,
+      messageId: ref.id,
+      connectionId,
+      connectionName: (connection.get("name") as string | undefined) ?? "",
+      recipientCount: ((current.get("recipients") ?? []) as Recipient[]).length,
+      body: current.get("body") as string,
+      scheduled: true,
+    });
     transaction.update(ref, {
       status: "sent",
       sentAt: FieldValue.serverTimestamp(),

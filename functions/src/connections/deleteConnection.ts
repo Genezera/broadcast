@@ -10,7 +10,7 @@ import {
 import { deleteConnectionInput, parseInput } from "../shared/validators";
 
 const deleteInBatches = async (
-  collection: "contacts" | "messages",
+  collection: "contacts" | "messages" | "notifications",
   tenantId: string,
   connectionId: string,
 ): Promise<number> => {
@@ -60,6 +60,7 @@ export const deleteConnection = onCall(
     // a conexão continua "deleting" e dá para repetir a exclusão.
     const contacts = await deleteInBatches("contacts", tenantId, connectionId);
     const messages = await deleteInBatches("messages", tenantId, connectionId);
+    await deleteInBatches("notifications", tenantId, connectionId);
     await ref.delete();
 
     logger.info("connection_deleted", {

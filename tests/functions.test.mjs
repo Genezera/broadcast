@@ -390,3 +390,161 @@ test("a connection being deleted rejects new messages", async () => {
     false,
   );
 });
+
+/** Dados próprios deste bloco (testes anteriores apagam o seed inicial). */
+const seedNotificationData = async () => {
+  const conn = (id, name) =>
+    db
+      .collection("connections")
+      .doc(id)
+      .set({ tenantId: "alice", name, status: "active" });
+  const contact = (id, connectionId, name) =>
+    db
+      .collection("contacts")
+      .doc(id)
+      .set({
+        tenantId: "alice",
+        connectionId,
+        name,
+        phone: "+55 11 90000-0000",
+      });
+  await Promise.all([
+    conn("n-conn-a", "Alice"),
+    conn("n-conn-b", "Outra"),
+    contact("n-contact-1", "n-conn-a", "Ana"),
+    contact("n-contact-2", "n-conn-a", "Bia"),
+    contact("n-contact-3", "n-conn-b", "Caio"),
+  ]);
+};
+await seedNotificationData();
+
+test("audience connections sends one message per connection to all of its contacts", async () => {
+  const result = await functions.createMessage.run(
+    as("alice", {
+      audience: "connections",
+      connectionIds: ["n-conn-a", "n-conn-b"],
+      body: "Para todas",
+      mode: "now",
+    }),
+  );
+  assert.equal(result.ids.length, 2);
+  assert.equal(result.connectionCount, 2);
+  // 2 contatos em n-conn-a + 1 em n-conn-b.
+  assert.equal(result.recipientCount, 3);
+
+  const messages = await Promise.all(
+    result.ids.map((id) => db.collection("messages").doc(id).get()),
+  );
+  assert.deepEqual(
+    messages.map((message) => message.get("connectionId")).sort(),
+    ["n-conn-a", "n-conn-b"],
+  );
+  for (const message of messages) {
+    assert.equal(message.get("status"), "sent");
+    assert.equal(message.get("tenantId"), "alice");
+    assert.equal(message.get("body"), "Para todas");
+  }
+});
+
+test("audience connections rejects other tenants, empty picks and connections without contacts", async () => {
+  await assert.rejects(
+    () =>
+      functions.createMessage.run(
+        as("alice", {
+          audience: "connections",
+          connectionIds: ["bob-connection"],
+          body: "Oi",
+          mode: "now",
+        }),
+      ),
+    code("not-found"),
+  );
+  await assert.rejects(
+    () =>
+      functions.createMessage.run(
+        as("alice", {
+          audience: "connections",
+          connectionIds: [],
+          body: "Oi",
+          mode: "now",
+        }),
+      ),
+    code("invalid-argument"),
+  );
+  await db
+    .collection("connections")
+    .doc("n-conn-empty")
+    .set({ tenantId: "alice", name: "Vazia", status: "active" });
+  await assert.rejects(
+    () =>
+      functions.createMessage.run(
+        as("alice", {
+          audience: "connections",
+          connectionIds: ["n-conn-empty"],
+          body: "Oi",
+          mode: "now",
+        }),
+      ),
+    (error) => error.details?.key === "noContactsInConnections",
+  );
+});
+
+test("an immediate message creates a notification with the connection and recipient count", async () => {
+  const { id } = await functions.createMessage.run(
+    as(
+      "alice",
+      newMessage({ connectionId: "n-conn-a", contactIds: ["n-contact-1"] }),
+    ),
+  );
+  const notification = await db.collection("notifications").doc(id).get();
+  assert.equal(notification.get("tenantId"), "alice");
+  assert.equal(notification.get("type"), "message_sent");
+  assert.equal(notification.get("connectionName"), "Alice");
+  assert.equal(notification.get("recipientCount"), 1);
+  assert.equal(notification.get("scheduled"), false);
+  assert.equal(notification.get("read"), false);
+});
+
+test("a scheduled message only notifies when the sweep sends it, exactly once", async () => {
+  const { id } = await functions.createMessage.run(
+    as(
+      "alice",
+      newMessage({
+        connectionId: "n-conn-a",
+        contactIds: ["n-contact-1"],
+        mode: "scheduled",
+        scheduledAt: hoursFromNow(1),
+      }),
+    ),
+  );
+  const notification = db.collection("notifications").doc(id);
+  assert.equal((await notification.get()).exists, false);
+
+  await db
+    .collection("messages")
+    .doc(id)
+    .update({ scheduledAt: secondsAgo(1) });
+  await Promise.all([processDueMessages(), processDueMessages()]);
+  const created = await notification.get();
+  assert.equal(created.get("scheduled"), true);
+  assert.equal(created.get("connectionName"), "Alice");
+
+  // Marcar como lida e rodar a varredura de novo não recria o aviso.
+  await notification.update({ read: true });
+  await processDueMessages();
+  assert.equal((await notification.get()).get("read"), true);
+});
+
+test("deleting a message also removes its notification", async () => {
+  const { id } = await functions.createMessage.run(
+    as(
+      "alice",
+      newMessage({ connectionId: "n-conn-a", contactIds: ["n-contact-1"] }),
+    ),
+  );
+  await functions.deleteMessage.run(as("alice", { messageId: id }));
+  assert.equal(
+    (await db.collection("notifications").doc(id).get()).exists,
+    false,
+  );
+});

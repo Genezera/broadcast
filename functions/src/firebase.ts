@@ -11,4 +11,5 @@ export const collections = {
   connections: db.collection("connections"),
   contacts: db.collection("contacts"),
   messages: db.collection("messages"),
+  notifications: db.collection("notifications"),
 } as const;

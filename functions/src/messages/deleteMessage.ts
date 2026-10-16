@@ -20,6 +20,8 @@ export const deleteMessage = onCall(callableOptions, async (request) => {
     const snapshot = await transaction.get(ref);
     assertBelongsToTenant(snapshot, tenantId, "messageNotFound");
     transaction.delete(ref);
+    // O aviso de envio dessa mensagem (mesmo ID) some junto com ela.
+    transaction.delete(collections.notifications.doc(messageId));
   });
 
   logger.info("message_deleted", { tenantId, messageId });

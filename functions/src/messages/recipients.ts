@@ -3,17 +3,21 @@ import type {
   DocumentSnapshot,
   Transaction,
 } from "firebase-admin/firestore";
+import { LIMITS } from "../config";
 import { collections } from "../firebase";
 import { belongsToTenant } from "../shared/authorization";
 import { fail } from "../shared/errors";
 import type { Recipient } from "../shared/types";
 
-/** Exige que a conexão exista, seja do tenant e não esteja em exclusão. */
+/**
+ * Exige que a conexão exista, seja do tenant e não esteja em exclusão.
+ * Devolve o nome dela (usado nas notificações).
+ */
 export const assertActiveConnection = async (
   transaction: Transaction,
   tenantId: string,
   connectionId: string,
-): Promise<void> => {
+): Promise<string> => {
   const connection = await transaction.get(
     collections.connections.doc(connectionId),
   );
@@ -23,6 +27,36 @@ export const assertActiveConnection = async (
   ) {
     throw fail("not-found", "connectionNotFound");
   }
+  return connection.get("name") as string;
+};
+
+/**
+ * Todos os contatos de uma conexão, em ordem alfabética. Passar do limite é
+ * um erro: a mensagem guarda um snapshot de cada destinatário no documento.
+ */
+export const allContactsOf = async (
+  transaction: Transaction,
+  tenantId: string,
+  connectionId: string,
+): Promise<Recipient[]> => {
+  const snapshot = await transaction.get(
+    collections.contacts
+      .where("tenantId", "==", tenantId)
+      .where("connectionId", "==", connectionId)
+      .limit(LIMITS.maxRecipients + 1),
+  );
+  if (snapshot.size > LIMITS.maxRecipients) {
+    throw fail("invalid-argument", "tooManyRecipients", {
+      max: LIMITS.maxRecipients,
+    });
+  }
+  return snapshot.docs
+    .map((doc) => ({
+      id: doc.id,
+      name: doc.get("name") as string,
+      phone: doc.get("phone") as string,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 };
 
 /**

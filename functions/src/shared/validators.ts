@@ -30,9 +30,24 @@ const schedule = {
   scheduledAt: z.iso.datetime({ offset: true }).nullish(),
 };
 
+// Envio para contatos escolhidos de uma conexão.
 export const createMessageInput = z.object({
   connectionId: documentId,
   contactIds,
+  body,
+  ...schedule,
+});
+
+// Envio para todos os contatos de uma ou mais conexões (uma mensagem por
+// conexão). Repetidas são ignoradas.
+const connectionIds = z
+  .array(documentId, { error: "noConnections" })
+  .min(1, "noConnections")
+  .max(LIMITS.maxConnectionsPerSend, "tooManyConnections")
+  .transform((ids) => [...new Set(ids)]);
+
+export const createBroadcastInput = z.object({
+  connectionIds,
   body,
   ...schedule,
 });
@@ -51,6 +66,7 @@ export const deleteConnectionInput = z.object({ connectionId: documentId });
 const PARAMS = {
   bodyTooLong: { max: LIMITS.messageBodyMaxLength },
   tooManyRecipients: { max: LIMITS.maxRecipients },
+  tooManyConnections: { max: LIMITS.maxConnectionsPerSend },
 } as const;
 
 /**

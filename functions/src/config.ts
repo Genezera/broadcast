@@ -6,7 +6,10 @@ export const callableOptions = { region: REGION, maxInstances: 10 } as const;
 
 export const LIMITS = {
   messageBodyMaxLength: 2000,
-  maxRecipients: 100,
+  /** Destinatários por mensagem (e contatos por conexão no envio em massa). */
+  maxRecipients: 500,
+  /** Conexões escolhidas de uma vez no envio para várias conexões. */
+  maxConnectionsPerSend: 20,
   /** Agendamentos são aceitos até este intervalo a partir de agora. */
   maxScheduleAheadMs: 365 * 24 * 60 * 60 * 1000,
   /** Lote das exclusões em cascata (o batch do Firestore aceita até 500 operações). */

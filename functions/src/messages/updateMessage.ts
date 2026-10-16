@@ -8,6 +8,7 @@ import {
   requireTenantId,
 } from "../shared/authorization";
 import { fail } from "../shared/errors";
+import { writeSentNotification } from "../shared/notifications";
 import type { Recipient } from "../shared/types";
 import {
   parseInput,
@@ -36,7 +37,11 @@ export const updateMessage = onCall(callableOptions, async (request) => {
     // "mover" uma mensagem para outra conexão editando.
     const connectionId = current.get("connectionId") as string;
 
-    await assertActiveConnection(transaction, tenantId, connectionId);
+    const connectionName = await assertActiveConnection(
+      transaction,
+      tenantId,
+      connectionId,
+    );
     const recipients = await resolveRecipients(
       transaction,
       tenantId,
@@ -63,6 +68,18 @@ export const updateMessage = onCall(callableOptions, async (request) => {
     if (alreadySent) {
       transaction.update(ref, content);
       return;
+    }
+    // Uma agendada editada para "enviar agora" é enviada neste momento: avisa.
+    if (scheduledMs === null) {
+      writeSentNotification(transaction, {
+        tenantId,
+        messageId: ref.id,
+        connectionId,
+        connectionName,
+        recipientCount: recipients.length,
+        body: input.body,
+        scheduled: false,
+      });
     }
     transaction.update(ref, {
       ...content,
