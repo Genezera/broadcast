@@ -28,8 +28,6 @@ export const pt = {
     italic: "Itálico",
     underline: "Sublinhado",
     strike: "Riscado",
-    hint: "Ou digite *negrito*, _itálico_, __sublinhado__ e ~riscado~.",
-    preview: "Prévia",
   },
   notifications: {
     title: "Notificações",
@@ -360,6 +358,7 @@ export const pt = {
       noContacts: "Nenhum contato nesta conexão.",
       removed: "(removido)",
       messageLabel: "Mensagem",
+      messagePlaceholder: "Escreva sua mensagem...",
       counter: "{count}/{max} caracteres",
       whenTitle: "Quando enviar?",
       sendNow: "Enviar agora",

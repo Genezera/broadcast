@@ -26,8 +26,6 @@ export const en: Dictionary = {
     italic: "Italic",
     underline: "Underline",
     strike: "Strikethrough",
-    hint: "Or type *bold*, _italic_, __underline__ and ~strikethrough~.",
-    preview: "Preview",
   },
   notifications: {
     title: "Notifications",
@@ -355,6 +353,7 @@ export const en: Dictionary = {
       noContacts: "No contacts in this connection.",
       removed: "(removed)",
       messageLabel: "Message",
+      messagePlaceholder: "Write your message...",
       counter: "{count}/{max} characters",
       whenTitle: "When to send?",
       sendNow: "Send now",

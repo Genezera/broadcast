@@ -8,7 +8,7 @@ afterEach(cleanup);
 describe("FormattedText", () => {
   it("renders each style with its own element", () => {
     const { container } = render(
-      <FormattedText text="*negrito* _itálico_ __sublinhado__ ~riscado~" />,
+      <FormattedText text="*negrito* _itálico_ ++sublinhado++ ~riscado~" />,
     );
     expect(container.querySelector("strong")?.textContent).toBe("negrito");
     expect(container.querySelector("em")?.textContent).toBe("itálico");

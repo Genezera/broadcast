@@ -8,7 +8,7 @@ import {
 const TAGS: Record<Marker, "strong" | "em" | "u" | "s"> = {
   "*": "strong",
   _: "em",
-  __: "u",
+  "++": "u",
   "~": "s",
 };
 

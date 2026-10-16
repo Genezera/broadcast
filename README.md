@@ -16,7 +16,7 @@ Publicado em: https://broadcast-renan-2026.web.app
 | **Contatos**           | CRUD com busca por nome ou telefone. Campo de telefone com bandeira do país, DDI e máscara aplicada enquanto digita; o valor é salvo no formato internacional.                                                                                         |
 | **Broadcast**          | Lista de **todas** as mensagens, com filtro por conexão (Todas ou uma) e por status (Todas, Enviadas, Agendadas). Cada mensagem abre em Ver detalhes, com o texto completo e a lista de destinatários (com busca). Criar, editar, excluir. Tempo real. |
 | **Alcance do envio**   | Em Nova mensagem: **Contatos** (uma conexão e os contatos que quiser, com busca e Selecionar todos) ou **Conexões** (todos os contatos de cada conexão marcada, com busca; sai uma mensagem por conexão). Listas longas rolam dentro do diálogo.       |
-| **Texto formatado**    | Negrito, itálico, sublinhado e riscado, por botões, atalhos (Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+Shift+X) ou digitando `*negrito*`, `_itálico_`, `__sublinhado__`, `~riscado~`. Tem prévia no diálogo e aparece formatado na lista e nos detalhes.            |
+| **Texto formatado**    | Editor visual no campo da mensagem: selecione o trecho e use os botões ou Ctrl+B, Ctrl+I, Ctrl+U e Ctrl+Shift+X (negrito, itálico, sublinhado, riscado). O estilo aparece direto no texto, sem prévia, e também na lista, nos detalhes e na edição.    |
 | **Notificações**       | Sino no cabeçalho com contador de não lidas. Toda mensagem enviada, na hora ou pelo agendador, gera uma notificação (e um aviso na tela se o app estiver aberto). Dá para marcar como lida, remover e limpar.                                          |
 | **Agendamento**        | Calendário e relógio no estilo do app (claro e escuro, em português e inglês). Uma Cloud Function roda a cada minuto e muda `Agendada` para `Enviada`, mesmo com o navegador fechado.                                                                  |
 | **Painel**             | Totais de conexões, contatos, enviadas e agendadas, e as mensagens mais recentes.                                                                                                                                                                      |
@@ -198,11 +198,11 @@ npm run test:rules       # (opcional) apenas Security Rules
 npm run test:functions   # (opcional) apenas Functions e agendador
 ```
 
-São **172 testes automatizados**: 140 no frontend, 5 nos validadores do backend e 27 de integração com o emulador.
+São **175 testes automatizados**: 143 no frontend, 5 nos validadores do backend e 27 de integração com o emulador.
 
 - **Rules:** isolamento entre tenants (leitura e escrita), spoofing e troca de `tenantId` ou `connectionId`, contato apontando para conexão alheia, escrita de mensagens bloqueada, perfil `tenants`, conexões em exclusão e `notifications` (só o dono lê e marca como lida, ninguém cria pelo cliente).
 - **Functions:** validação de entrada, destinatários de outro tenant ou conexão, edição de mensagens, agendamento sem navegador, reagendamento contra varredura antiga, varreduras concorrentes (envio único), mensagem excluída, cascata de exclusão, envio para várias conexões e notificações (criação única, agendador e exclusão). Os erros devolvem a chave estável para tradução.
-- **Frontend:** formatação de texto (leitura, atalhos e segurança contra HTML), listas com busca, editor, notificações, schemas, telefone, datas, imagem de perfil, nome de exibição, navegação, mensagens de erro, diálogo de confirmação, campo de telefone e assistente de ajuda.
+- **Frontend:** formatação de texto (marcadores, conversão para o editor e segurança contra HTML), editor com estilos ao vivo, listas com busca, notificações, schemas, telefone, datas, imagem de perfil, nome de exibição, navegação, mensagens de erro, diálogo de confirmação, campo de telefone e assistente de ajuda.
 - **Idiomas:** paridade dos dois dicionários (mesmas chaves, mesmos `{parâmetros}`, plurais completos), interpolação e plural, persistência da troca de idioma, conteúdo da ajuda nos dois idiomas e cobertura de todas as chaves de erro do backend.
 
 ## Publicação
@@ -219,7 +219,7 @@ O Hosting serve `web/dist` com fallback para `index.html` (SPA). Registre dois u
 
 - **Foto de perfil sem Storage:** a imagem é recortada e reduzida para 256 px no navegador (JPEG, de 20 a 40 KB) e guardada como data URL em `tenants/{uid}.photoData`. As Security Rules aceitam só `data:image/...` de até 120 KB. Isso evita configurar mais um serviço para um avatar; para fotos grandes ou compartilhadas, o caminho natural seria o Firebase Storage.
 - **Idiomas sem biblioteca:** são só dois, e um dicionário tipado resolve com plural e parâmetros. Para muitos idiomas ou tradução por equipe, uma biblioteca como i18next compensaria.
-- **Formatação sem HTML:** o texto é guardado puro, com marcadores (`*negrito*`, `_itálico_`, `__sublinhado__`, `~riscado~`), e a interface monta elementos React a partir deles. Nada de HTML vindo do usuário, então não há risco de XSS. Um editor visual completo (Tiptap, por exemplo) seria a evolução.
+- **Formatação sem HTML:** o campo da mensagem é um editor visual (Tiptap, só com parágrafos e os quatro estilos). Por baixo, o texto é guardado puro, com marcadores (`*negrito*`, `_itálico_`, `++sublinhado++`, `~riscado~`), e a interface monta elementos React a partir deles, então não há risco de XSS e o backend continua guardando só texto. A conversão editor ⇄ marcadores fica em `lib/formatting.ts`, com testes de ida e volta.
 - **Calendário:** `@mui/x-date-pickers` com `dayjs`, carregado sob demanda só quando o usuário escolhe agendar.
 - **Notificações no app:** não há push do navegador nem e-mail; o aviso é no sino e na tela. Para avisar com o app fechado, o caminho seria Firebase Cloud Messaging.
 - **Frequência do agendador:** a cada minuto; o envio ocorre com tolerância de até cerca de 1 minuto. Para precisão por mensagem, a evolução natural seria Cloud Tasks.

@@ -1,17 +1,19 @@
 /**
- * Formatação de texto das mensagens, no estilo dos aplicativos de conversa:
+ * Formatação de texto das mensagens. O texto é guardado com marcadores, no
+ * estilo dos aplicativos de conversa:
  *
- *   *negrito*   _itálico_   __sublinhado__   ~riscado~
+ *   *negrito*   _itálico_   ++sublinhado++   ~riscado~
  *
- * O texto é guardado com os marcadores e nunca vira HTML: quem exibe monta
- * elementos React a partir desta árvore (ver components/ui/FormattedText).
+ * O editor mostra o estilo ao vivo (nada de digitar marcador) e converte de e
+ * para esses marcadores. O texto nunca vira HTML: quem exibe monta elementos
+ * React a partir desta árvore (ver components/ui/FormattedText).
  */
-export type Marker = "*" | "_" | "__" | "~";
+export type Marker = "*" | "_" | "++" | "~";
 
 export type FormatNode = string | { marker: Marker; children: FormatNode[] };
 
-// "__" vem antes de "_" para o sublinhado não ser lido como dois itálicos.
-const MARKERS: Marker[] = ["__", "*", "_", "~"];
+// "++" vem antes dos demais só para o sublinhado nunca ser lido como outro marcador.
+const MARKERS: Marker[] = ["++", "*", "_", "~"];
 
 const isWordChar = (char: string | undefined) =>
   !!char && /[\p{L}\p{N}]/u.test(char);
@@ -86,64 +88,77 @@ export const stripFormatting = (text: string): string =>
 export const hasFormatting = (text: string): boolean =>
   parseFormatting(text).some((node) => typeof node !== "string");
 
-export type Selection = { value: string; start: number; end: number };
+// --- Ponte com o editor (documento do ProseMirror/Tiptap) -------------------
 
-/**
- * Liga ou desliga um estilo na seleção do campo de texto. Com a seleção já
- * marcada, tira os marcadores; sem seleção, abre um par de marcadores com o
- * cursor no meio. Espaços nas pontas ficam fora, porque o marcador precisa
- * encostar no texto para valer.
- */
-export const toggleFormat = (
-  value: string,
-  selectionStart: number,
-  selectionEnd: number,
-  marker: Marker,
-): Selection => {
-  let start = selectionStart;
-  let end = selectionEnd;
-  while (start < end && /\s/.test(value[start])) start++;
-  while (end > start && /\s/.test(value[end - 1])) end--;
-  const size = marker.length;
-
-  // Marcadores logo ao redor da seleção: remove.
-  if (
-    start >= size &&
-    value.slice(start - size, start) === marker &&
-    value.slice(end, end + size) === marker
-  ) {
-    return {
-      value:
-        value.slice(0, start - size) +
-        value.slice(start, end) +
-        value.slice(end + size),
-      start: start - size,
-      end: end - size,
-    };
-  }
-  // A própria seleção já inclui os marcadores: remove.
-  if (
-    end - start >= size * 2 &&
-    value.slice(start, start + size) === marker &&
-    value.slice(end - size, end) === marker
-  ) {
-    return {
-      value:
-        value.slice(0, start) +
-        value.slice(start + size, end - size) +
-        value.slice(end),
-      start,
-      end: end - size * 2,
-    };
-  }
-  return {
-    value:
-      value.slice(0, start) +
-      marker +
-      value.slice(start, end) +
-      marker +
-      value.slice(end),
-    start: start + size,
-    end: end + size,
-  };
+/** Parte do documento do editor que usamos: parágrafos com texto e estilos. */
+export type DocNode = {
+  type: string;
+  text?: string;
+  marks?: { type: string }[];
+  content?: DocNode[];
 };
+
+const MARK_OF: Record<Marker, string> = {
+  "*": "bold",
+  _: "italic",
+  "++": "underline",
+  "~": "strike",
+};
+
+// Ordem fixa dos marcadores de fora para dentro, para o resultado ser estável.
+const MARK_ORDER = ["underline", "bold", "italic", "strike"] as const;
+const MARKER_OF: Record<string, Marker> = {
+  underline: "++",
+  bold: "*",
+  italic: "_",
+  strike: "~",
+};
+
+const lineToNodes = (nodes: FormatNode[], marks: string[]): DocNode[] =>
+  nodes.flatMap((node): DocNode[] =>
+    typeof node === "string"
+      ? [
+          {
+            type: "text",
+            text: node,
+            ...(marks.length > 0 && {
+              marks: marks.map((type) => ({ type })),
+            }),
+          },
+        ]
+      : lineToNodes(node.children, [...marks, MARK_OF[node.marker]]),
+  );
+
+/** Texto com marcadores -> documento do editor (um parágrafo por linha). */
+export const markersToDoc = (text: string): DocNode => ({
+  type: "doc",
+  content: text.split("\n").map((line): DocNode => {
+    const content = lineToNodes(parseFormatting(line), []);
+    return content.length > 0
+      ? { type: "paragraph", content }
+      : { type: "paragraph" };
+  }),
+});
+
+const textToMarkers = (node: DocNode): string => {
+  const text = node.text ?? "";
+  const active = new Set((node.marks ?? []).map((mark) => mark.type));
+  const ordered = MARK_ORDER.filter((type) => active.has(type));
+  const core = text.trim();
+  if (ordered.length === 0 || core === "") return text;
+  // O marcador precisa encostar no texto: espaços das pontas ficam de fora.
+  const lead = text.slice(0, text.indexOf(core));
+  const trail = text.slice(lead.length + core.length);
+  const open = ordered.map((type) => MARKER_OF[type]);
+  return lead + open.join("") + core + [...open].reverse().join("") + trail;
+};
+
+/** Documento do editor -> texto com marcadores (um parágrafo por linha). */
+export const docToMarkers = (doc: DocNode): string =>
+  (doc.content ?? [])
+    .map((paragraph) =>
+      (paragraph.content ?? [])
+        .map((node) => (node.type === "hardBreak" ? "\n" : textToMarkers(node)))
+        .join(""),
+    )
+    .join("\n");

@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  docToMarkers,
   hasFormatting,
+  markersToDoc,
   parseFormatting,
   stripFormatting,
-  toggleFormat,
 } from "./formatting";
 
 describe("parseFormatting", () => {
@@ -14,8 +15,8 @@ describe("parseFormatting", () => {
     expect(parseFormatting("_oi_")).toEqual([
       { marker: "_", children: ["oi"] },
     ]);
-    expect(parseFormatting("__oi__")).toEqual([
-      { marker: "__", children: ["oi"] },
+    expect(parseFormatting("++oi++")).toEqual([
+      { marker: "++", children: ["oi"] },
     ]);
     expect(parseFormatting("~oi~")).toEqual([
       { marker: "~", children: ["oi"] },
@@ -33,6 +34,15 @@ describe("parseFormatting", () => {
     ]);
   });
 
+  it("combines underline with italic without ambiguity", () => {
+    expect(parseFormatting("++_oi_++")).toEqual([
+      {
+        marker: "++",
+        children: [{ marker: "_", children: ["oi"] }],
+      },
+    ]);
+  });
+
   it("ignores markers that are not wrapped around text", () => {
     for (const text of [
       "2 * 3 * 4",
@@ -40,6 +50,8 @@ describe("parseFormatting", () => {
       "*sem fechar",
       "* *",
       "preço ~ 10",
+      "C++ e C++ puro",
+      "a ++ b ++ c",
     ]) {
       expect(hasFormatting(text), text).toBe(false);
       expect(stripFormatting(text)).toBe(text);
@@ -57,43 +69,81 @@ describe("parseFormatting", () => {
 
 describe("stripFormatting", () => {
   it("removes the markers and keeps the text", () => {
-    expect(stripFormatting("*Promoção* de _hoje_: __até__ ~ontem~")).toBe(
+    expect(stripFormatting("*Promoção* de _hoje_: ++até++ ~ontem~")).toBe(
       "Promoção de hoje: até ontem",
     );
   });
 });
 
-describe("toggleFormat", () => {
-  it("wraps the selection", () => {
-    expect(toggleFormat("olá mundo", 4, 9, "*")).toEqual({
-      value: "olá *mundo*",
-      start: 5,
-      end: 10,
+describe("editor document conversion", () => {
+  const text = (value: string, ...marks: string[]) => ({
+    type: "text",
+    text: value,
+    ...(marks.length > 0 && { marks: marks.map((type) => ({ type })) }),
+  });
+
+  it("turns markers into styled text, one paragraph per line", () => {
+    expect(markersToDoc("Olá *você*\n\n_fim_")).toEqual({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [text("Olá "), text("você", "bold")],
+        },
+        { type: "paragraph" },
+        { type: "paragraph", content: [text("fim", "italic")] },
+      ],
     });
   });
 
-  it("opens a pair with the cursor in the middle when nothing is selected", () => {
-    expect(toggleFormat("olá ", 4, 4, "__")).toEqual({
-      value: "olá ____",
-      start: 6,
-      end: 6,
-    });
+  it("turns styled text back into markers", () => {
+    expect(
+      docToMarkers({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              text("a "),
+              text("forte", "bold"),
+              text(" e "),
+              text("sublinhado itálico", "underline", "italic"),
+            ],
+          },
+          { type: "paragraph" },
+          { type: "paragraph", content: [text("riscado", "strike")] },
+        ],
+      }),
+    ).toBe("a *forte* e ++_sublinhado itálico_++\n\n~riscado~");
   });
 
-  it("keeps spaces at the edges outside the markers", () => {
-    expect(toggleFormat("a  b  c", 1, 6, "_").value).toBe("a  _b_  c");
+  it("keeps spaces outside the markers so the style still applies", () => {
+    expect(
+      docToMarkers({
+        type: "doc",
+        content: [
+          { type: "paragraph", content: [text(" oi ", "bold"), text("!")] },
+        ],
+      }),
+    ).toBe(" *oi* !");
+    // Só espaço estilizado não vira marcador.
+    expect(
+      docToMarkers({
+        type: "doc",
+        content: [{ type: "paragraph", content: [text("  ", "bold")] }],
+      }),
+    ).toBe("  ");
   });
 
-  it("removes the markers when the selection is already styled", () => {
-    expect(toggleFormat("olá *mundo*", 5, 10, "*")).toEqual({
-      value: "olá mundo",
-      start: 4,
-      end: 9,
-    });
-    expect(toggleFormat("olá *mundo*", 4, 11, "*")).toEqual({
-      value: "olá mundo",
-      start: 4,
-      end: 9,
-    });
+  it("round-trips formatted messages", () => {
+    for (const original of [
+      "Oi *tudo* bem?",
+      "++_junto_++ e *~outro~*",
+      "linha 1\n\nlinha 3 com _itálico_",
+      "sem estilo nenhum",
+      "",
+    ]) {
+      expect(docToMarkers(markersToDoc(original))).toBe(original);
+    }
   });
 });

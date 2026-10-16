@@ -132,10 +132,10 @@ const TEXT: Record<Lang, Record<string, TopicText>> = {
       label: "Formatar o texto",
       intro: "Dá para deixar a mensagem mais clara com estilos:",
       steps: [
-        "Selecione um trecho do texto e clique em N (negrito), I (itálico), S (sublinhado) ou no risco (riscado) na barra acima do campo.",
+        "No campo da mensagem, selecione um trecho do texto.",
+        "Clique em negrito, itálico, sublinhado ou riscado na barra acima do campo. O estilo aparece ali mesmo, no texto.",
         "Atalhos: Ctrl+B, Ctrl+I, Ctrl+U e Ctrl+Shift+X.",
-        "Você também pode digitar *negrito*, _itálico_, __sublinhado__ e ~riscado~.",
-        "A prévia abaixo do campo mostra como a mensagem fica.",
+        "Para tirar o estilo, selecione o trecho e clique no botão de novo.",
       ],
       action: "Ir para Broadcast",
     },
@@ -292,10 +292,10 @@ const TEXT: Record<Lang, Record<string, TopicText>> = {
       label: "Format the text",
       intro: "You can make a message clearer with styles:",
       steps: [
-        "Select part of the text and click B (bold), I (italic), U (underline) or the strikethrough button in the bar above the field.",
+        "In the message field, select part of the text.",
+        "Click bold, italic, underline or strikethrough in the bar above the field. The style shows right there in the text.",
         "Shortcuts: Ctrl+B, Ctrl+I, Ctrl+U and Ctrl+Shift+X.",
-        "You can also type *bold*, _italic_, __underline__ and ~strikethrough~.",
-        "The preview below the field shows how the message looks.",
+        "To remove a style, select the text and click the button again.",
       ],
       action: "Go to Broadcast",
     },
@@ -492,7 +492,7 @@ export const FAQ: Record<Lang, Faq[]> = {
     {
       question: "Como coloco negrito, itálico ou sublinhado?",
       answer:
-        "Use a barra acima do campo da mensagem ou os atalhos Ctrl+B, Ctrl+I e Ctrl+U. Ou digite *negrito*, _itálico_, __sublinhado__ e ~riscado~.",
+        "Selecione o trecho no campo da mensagem e use a barra acima dele ou os atalhos Ctrl+B, Ctrl+I e Ctrl+U. O estilo aparece direto no texto.",
     },
     {
       question: "Como sei que uma mensagem foi enviada?",
@@ -554,7 +554,7 @@ export const FAQ: Record<Lang, Faq[]> = {
     {
       question: "How do I add bold, italic or underline?",
       answer:
-        "Use the bar above the message field or the shortcuts Ctrl+B, Ctrl+I and Ctrl+U. Or type *bold*, _italic_, __underline__ and ~strikethrough~.",
+        "Select the text in the message field and use the bar above it or the shortcuts Ctrl+B, Ctrl+I and Ctrl+U. The style shows right in the text.",
     },
     {
       question: "How do I know a message was sent?",

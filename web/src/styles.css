@@ -227,7 +227,7 @@
 @layer base {
   :root {
     font-family: "DM Sans", sans-serif;
-    font-synthesis: none;
+    font-synthesis: weight style;
   }
   body {
     margin: 0;
@@ -299,6 +299,44 @@ html[data-vt="lang"]::view-transition-new(root) {
 }
 
 @layer components {
+  /* Campo da mensagem com formatação ao vivo (Tiptap). Imita um campo do MUI. */
+  .message-editor {
+    border: 1px solid var(--c-line-strong);
+    border-radius: 12px;
+    background: var(--c-surface);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .message-editor:hover {
+    border-color: var(--c-muted);
+  }
+  .message-editor:focus-within {
+    border-color: var(--c-brand);
+    box-shadow: 0 0 0 1px var(--c-brand);
+  }
+  .message-editor-error,
+  .message-editor-error:hover {
+    border-color: #ef4444;
+  }
+  .message-editor-content {
+    min-height: 7rem;
+    max-height: 15rem;
+    overflow-y: auto;
+    padding: 12px 14px;
+    outline: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.55;
+  }
+  .message-editor-content p {
+    margin: 0;
+  }
+  /* Parágrafo vazio mantém a altura de uma linha (linha em branco). */
+  .message-editor-content p:empty::after,
+  .message-editor-content p > br:only-child {
+    content: "";
+  }
   /* Seletor de idioma: pílula com uma marca que desliza sob o idioma ativo. */
   .lang-toggle {
     position: relative;
