@@ -50,7 +50,7 @@ describe("HelpAssistant", () => {
     // O usuário vê a própria escolha e, em seguida, a resposta passo a passo.
     expect(
       await screen.findByText(
-        /Informe uma data e um horário futuros/,
+        /Escolha a data no calendário/,
         {},
         { timeout: 3000 },
       ),
@@ -108,7 +108,7 @@ describe("HelpAssistant", () => {
     );
     expect(
       await screen.findByText(
-        /Enter a future date and time/,
+        /Pick the date on the calendar/,
         {},
         { timeout: 3000 },
       ),

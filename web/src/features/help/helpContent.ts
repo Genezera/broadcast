@@ -32,6 +32,7 @@ const GRAPH: Record<string, { next: string[]; to?: string }> = {
       "send",
       "schedule",
       "manage",
+      "notifications",
       "account",
       "appearance",
       "troubleshoot",
@@ -43,7 +44,12 @@ const GRAPH: Record<string, { next: string[]; to?: string }> = {
   },
   connections: { next: ["contacts", "send"], to: "/connections" },
   contacts: { next: ["send", "t_phone"], to: "/contacts" },
-  send: { next: ["schedule", "manage", "t_nocontacts"], to: "/broadcasts" },
+  send: {
+    next: ["format", "schedule", "manage", "t_nocontacts"],
+    to: "/broadcasts",
+  },
+  format: { next: ["send", "schedule"], to: "/broadcasts" },
+  notifications: { next: ["schedule", "send"], to: "/broadcasts" },
   schedule: { next: ["manage", "t_scheduled"], to: "/broadcasts" },
   manage: { next: ["schedule", "send"], to: "/broadcasts" },
   account: { next: ["appearance", "t_password"], to: "/profile" },
@@ -111,13 +117,38 @@ const TEXT: Record<Lang, Record<string, TopicText>> = {
     send: {
       label: "Enviar uma mensagem",
       steps: [
-        "Em Broadcast, escolha a conexão e clique em Nova mensagem.",
-        "Marque os contatos (ou use Selecionar todos) e escreva a mensagem.",
-        "Deixe Enviar agora marcado e confirme.",
+        "Em Broadcast, clique em Nova mensagem.",
+        "Em Enviar para, escolha Contatos (uma conexão e os contatos que quiser) ou Conexões (todos os contatos das conexões marcadas).",
+        "Use a busca e o Selecionar todos para marcar mais rápido. A lista rola quando é grande.",
+        "Escreva a mensagem, deixe Enviar agora marcado e confirme.",
       ],
       tips: [
         "O envio é uma simulação: nenhuma mensagem real é disparada.",
-        "É preciso ter ao menos um contato cadastrado na conexão.",
+        "Enviando para várias conexões, sai uma mensagem por conexão. Conexões sem contatos são puladas.",
+      ],
+      action: "Ir para Broadcast",
+    },
+    format: {
+      label: "Formatar o texto",
+      intro: "Dá para deixar a mensagem mais clara com estilos:",
+      steps: [
+        "Selecione um trecho do texto e clique em N (negrito), I (itálico), S (sublinhado) ou no risco (riscado) na barra acima do campo.",
+        "Atalhos: Ctrl+B, Ctrl+I, Ctrl+U e Ctrl+Shift+X.",
+        "Você também pode digitar *negrito*, _itálico_, __sublinhado__ e ~riscado~.",
+        "A prévia abaixo do campo mostra como a mensagem fica.",
+      ],
+      action: "Ir para Broadcast",
+    },
+    notifications: {
+      label: "Notificações",
+      intro: "O sino no cabeçalho avisa quando uma mensagem é enviada:",
+      steps: [
+        "Mensagens enviadas na hora e agendadas geram um aviso quando são enviadas.",
+        "Um número no sino mostra quantas notificações você ainda não leu.",
+        "Clique em uma notificação para ver as mensagens daquela conexão. Dá para marcar tudo como lido ou limpar a lista.",
+      ],
+      tips: [
+        "Com o site aberto, um aviso também aparece na tela assim que a mensagem agendada é enviada.",
       ],
       action: "Ir para Broadcast",
     },
@@ -125,7 +156,7 @@ const TEXT: Record<Lang, Record<string, TopicText>> = {
       label: "Agendar uma mensagem",
       steps: [
         "Na nova mensagem, escolha Agendar.",
-        "Informe uma data e um horário futuros.",
+        "Escolha a data no calendário e o horário no relógio (sempre no futuro).",
         "Confirme. A mensagem fica com o status Agendada.",
         "No horário, o servidor muda para Enviada sozinho, mesmo com o site fechado.",
       ],
@@ -138,8 +169,9 @@ const TEXT: Record<Lang, Record<string, TopicText>> = {
     manage: {
       label: "Editar ou excluir mensagens",
       steps: [
-        "Na lista de Broadcast, use o lápis para editar ou a lixeira para excluir.",
-        "Use os filtros Todas, Enviadas e Agendadas para localizar.",
+        "Em Broadcast você vê as mensagens de todas as conexões. Use o filtro de conexão e os botões Todas, Enviadas e Agendadas para localizar.",
+        "Clique em Ver detalhes (ou no olho) para ler o texto completo e a lista de todos os destinatários, com busca.",
+        "Use o lápis para editar ou a lixeira para excluir.",
       ],
       tips: [
         "Uma mensagem já enviada pode ter o texto corrigido, mas não é reenviada nem volta a ser agendada.",
@@ -245,13 +277,38 @@ const TEXT: Record<Lang, Record<string, TopicText>> = {
     send: {
       label: "Send a message",
       steps: [
-        "Under Broadcast, choose the connection and click New message.",
-        "Check the contacts (or use Select all) and write the message.",
-        "Leave Send now selected and confirm.",
+        "Under Broadcast, click New message.",
+        "Under Send to, choose Contacts (one connection and the contacts you want) or Connections (every contact in the checked connections).",
+        "Use the search and Select all to pick faster. The list scrolls when it is long.",
+        "Write the message, leave Send now selected and confirm.",
       ],
       tips: [
         "Sending is a simulation: no real message is delivered.",
-        "You need at least one contact in the connection.",
+        "Sending to several connections creates one message per connection. Connections without contacts are skipped.",
+      ],
+      action: "Go to Broadcast",
+    },
+    format: {
+      label: "Format the text",
+      intro: "You can make a message clearer with styles:",
+      steps: [
+        "Select part of the text and click B (bold), I (italic), U (underline) or the strikethrough button in the bar above the field.",
+        "Shortcuts: Ctrl+B, Ctrl+I, Ctrl+U and Ctrl+Shift+X.",
+        "You can also type *bold*, _italic_, __underline__ and ~strikethrough~.",
+        "The preview below the field shows how the message looks.",
+      ],
+      action: "Go to Broadcast",
+    },
+    notifications: {
+      label: "Notifications",
+      intro: "The bell in the header tells you when a message is sent:",
+      steps: [
+        "Messages sent right away and scheduled ones create a notice when they are sent.",
+        "A number on the bell shows how many notifications you have not read.",
+        "Click a notification to see that connection's messages. You can mark everything as read or clear the list.",
+      ],
+      tips: [
+        "With the site open, a notice also pops up on screen as soon as the scheduled message is sent.",
       ],
       action: "Go to Broadcast",
     },
@@ -259,7 +316,7 @@ const TEXT: Record<Lang, Record<string, TopicText>> = {
       label: "Schedule a message",
       steps: [
         "In the new message, choose Schedule.",
-        "Enter a future date and time.",
+        "Pick the date on the calendar and the time on the clock (always in the future).",
         "Confirm. The message gets the Scheduled status.",
         "At that time, the server switches it to Sent by itself, even with the site closed.",
       ],
@@ -272,8 +329,9 @@ const TEXT: Record<Lang, Record<string, TopicText>> = {
     manage: {
       label: "Edit or delete messages",
       steps: [
-        "In the Broadcast list, use the pencil to edit or the trash can to delete.",
-        "Use the All, Sent and Scheduled filters to find them.",
+        "Broadcast shows the messages of all connections. Use the connection filter and the All, Sent and Scheduled buttons to find them.",
+        "Click View details (or the eye) to read the full text and the list of every recipient, with search.",
+        "Use the pencil to edit or the trash can to delete.",
       ],
       tips: [
         "A sent message can have its text corrected, but it is not sent again or scheduled again.",
@@ -427,6 +485,21 @@ export const FAQ: Record<Lang, Faq[]> = {
         "Na tela de login, digite seu e-mail e clique em Esqueci minha senha. Enviamos um link de redefinição (veja também o spam).",
     },
     {
+      question: "Posso enviar para todos os contatos ou para várias conexões?",
+      answer:
+        "Pode. Em Nova mensagem, escolha Conexões para mandar para todos os contatos das conexões marcadas (sai uma mensagem por conexão) ou Contatos para escolher quem recebe dentro de uma conexão.",
+    },
+    {
+      question: "Como coloco negrito, itálico ou sublinhado?",
+      answer:
+        "Use a barra acima do campo da mensagem ou os atalhos Ctrl+B, Ctrl+I e Ctrl+U. Ou digite *negrito*, _itálico_, __sublinhado__ e ~riscado~.",
+    },
+    {
+      question: "Como sei que uma mensagem foi enviada?",
+      answer:
+        "Pelo sino no cabeçalho: cada mensagem enviada, na hora ou agendada, gera uma notificação. Com o site aberto, aparece também um aviso na tela.",
+    },
+    {
       question: "Como mudo o idioma?",
       answer:
         "Use o seletor PT | EN no cabeçalho (ou no canto da tela de login). Todo o sistema muda na hora e a escolha fica salva.",
@@ -472,6 +545,21 @@ export const FAQ: Record<Lang, Faq[]> = {
       question: "I forgot my password. What now?",
       answer:
         "On the login screen, type your e-mail and click Forgot my password. We send a reset link (check spam too).",
+    },
+    {
+      question: "Can I send to all contacts or to several connections?",
+      answer:
+        "Yes. In New message, choose Connections to send to every contact in the checked connections (one message per connection) or Contacts to pick who receives it within one connection.",
+    },
+    {
+      question: "How do I add bold, italic or underline?",
+      answer:
+        "Use the bar above the message field or the shortcuts Ctrl+B, Ctrl+I and Ctrl+U. Or type *bold*, _italic_, __underline__ and ~strikethrough~.",
+    },
+    {
+      question: "How do I know a message was sent?",
+      answer:
+        "Through the bell in the header: every sent message, right away or scheduled, creates a notification. With the site open, a notice also pops up on screen.",
     },
     {
       question: "How do I change the language?",
