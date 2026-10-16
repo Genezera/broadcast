@@ -17,8 +17,7 @@ firestore-debug.log
 pubsub-debug.log
 ui-debug.log
 
-# Editor e ferramentas locais
-.claude/
+# Editor e arquivos locais
 .vscode/
 .idea/
 .DS_Store

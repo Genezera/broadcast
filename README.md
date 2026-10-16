@@ -213,7 +213,7 @@ npx firebase use --add          # selecione o projeto
 npx firebase deploy --only firestore,functions,hosting
 ```
 
-O Hosting serve `web/dist` com fallback para `index.html` (SPA). Registre dois usuários distintos no app publicado para demonstrar o isolamento. O `web/.env.production` guarda só a configuração pública do app Web; a segurança vem das Security Rules, não do sigilo dessas chaves.
+O Hosting serve `web/dist` com fallback para `index.html` (SPA). Registre dois usuários distintos no app publicado para demonstrar o isolamento. O build de produção lê a configuração do app Web em `web/.env.production` (ou `web/.env.local`), que não vai para o repositório; use `web/.env.example` como modelo. São valores públicos: a segurança vem das Security Rules, não do sigilo dessas chaves.
 
 ## Decisões e limitações
 
