@@ -55,6 +55,8 @@ export function useMessages(
         limit(max),
       ),
     [tenantId, connectionId, status, max],
+    // "Carregar mais" (max) mantém a lista; trocar de conexão ou de filtro, não.
+    `${connectionId ?? "all"}|${status ?? "all"}`,
   );
   return { messages: items, loading, error };
 }

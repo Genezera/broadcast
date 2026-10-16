@@ -10,12 +10,16 @@ import type { Contact } from "../../../types";
  * restringe a uma conexão; sem ele, retorna os de todas as conexões.
  */
 export function useContacts(tenantId: string, connectionId?: string) {
-  const { items, loading, error } = useFirestoreQuery<Contact>(() => {
-    const constraints = [where("tenantId", "==", tenantId)];
-    if (connectionId)
-      constraints.push(where("connectionId", "==", connectionId));
-    return query(collection(db, "contacts"), ...constraints);
-  }, [tenantId, connectionId]);
+  const { items, loading, error } = useFirestoreQuery<Contact>(
+    () => {
+      const constraints = [where("tenantId", "==", tenantId)];
+      if (connectionId)
+        constraints.push(where("connectionId", "==", connectionId));
+      return query(collection(db, "contacts"), ...constraints);
+    },
+    [tenantId, connectionId],
+    connectionId ?? "all",
+  );
 
   const contacts = useMemo(() => byName(items), [items]);
   return { contacts, loading, error };

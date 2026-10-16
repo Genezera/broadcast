@@ -9,16 +9,27 @@ export type QueryState<T> = {
   error: string;
 };
 
-type RawState<T> = Omit<QueryState<T>, "error"> & { failure: unknown };
+type RawState<T> = Omit<QueryState<T>, "error"> & {
+  failure: unknown;
+  /** De qual "escopo" são os itens (ver o parâmetro `scope` abaixo). */
+  scope: string;
+};
 
 /**
  * Assina uma consulta do Firestore em tempo real e devolve os documentos com
  * o ID injetado. A assinatura é refeita quando `deps` mudam e cancelada ao
  * desmontar o componente.
+ *
+ * `scope` identifica "de quem" são os itens (a conexão aberta, por exemplo).
+ * Enquanto `deps` mudam dentro do mesmo escopo (carregar mais, por exemplo),
+ * os itens atuais continuam na tela e a lista não pisca. Quando o escopo
+ * muda, os itens e o erro do escopo anterior somem na hora, em vez de
+ * aparecerem por um instante misturados com os do novo.
  */
 export function useFirestoreQuery<T extends { id: string }>(
   buildQuery: () => Query,
   deps: DependencyList,
+  scope = "",
 ): QueryState<T> {
   const { t } = useI18n();
   // Guardo o erro bruto e traduzo na leitura: se o idioma mudar com o erro na
@@ -27,12 +38,15 @@ export function useFirestoreQuery<T extends { id: string }>(
     items: [],
     loading: true,
     failure: null,
+    scope,
   });
 
   useEffect(() => {
-    // Mantenho os itens antigos enquanto recarrega, para a lista não piscar
-    // quando troco o filtro ou peço mais resultados.
-    setState((current) => ({ ...current, loading: true }));
+    setState((current) =>
+      current.scope === scope
+        ? { ...current, loading: true }
+        : { items: [], loading: true, failure: null, scope },
+    );
     // onSnapshot devolve a função de cancelar: retornar ela no effect fecha
     // o listener ao desmontar ou quando as dependências mudam.
     return onSnapshot(
@@ -44,17 +58,26 @@ export function useFirestoreQuery<T extends { id: string }>(
           ),
           loading: false,
           failure: null,
+          scope,
         }),
       // Erro comum aqui: permission-denied (query sem filtro de tenantId) ou
       // índice composto ausente.
       (cause) =>
-        setState({ items: [], loading: false, failure: cause ?? true }),
+        setState({
+          items: [],
+          loading: false,
+          failure: cause ?? true,
+          scope,
+        }),
     );
-  }, deps);
+  }, [scope, ...deps]);
 
+  // No primeiro render depois de trocar o escopo, o estado ainda é do escopo
+  // anterior (o efeito só roda depois): trato como "carregando", sem itens.
+  const stale = state.scope !== scope;
   return {
-    items: state.items,
-    loading: state.loading,
-    error: state.failure ? getErrorMessage(state.failure, t) : "",
+    items: stale ? [] : state.items,
+    loading: stale || state.loading,
+    error: !stale && state.failure ? getErrorMessage(state.failure, t) : "",
   };
 }
