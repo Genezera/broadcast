@@ -8,14 +8,11 @@ import { useI18n } from "../../../i18n/I18nProvider";
 import { readLastConnectionId } from "../lastConnection";
 
 /**
- * Destino dos atalhos `/contacts` e `/broadcasts` do menu: leva à última
- * conexão utilizada (ou à primeira ativa) ou orienta a criar uma conexão.
+ * Destino do atalho `/contacts` do menu: leva à última conexão utilizada (ou
+ * à primeira ativa) ou orienta a criar uma conexão. (Broadcast mostra as
+ * mensagens de todas as conexões, então não precisa de uma conexão atual.)
  */
-export function ConnectionRedirect({
-  section,
-}: {
-  section: "contacts" | "broadcasts";
-}) {
+export function ConnectionRedirect() {
   const { t } = useI18n();
   const { activeConnections, loading } = useConnectionsContext();
   if (loading) return <Loading />;
@@ -25,7 +22,7 @@ export function ConnectionRedirect({
     activeConnections.find((connection) => connection.id === lastId) ??
     activeConnections[0];
   if (target) {
-    return <Navigate to={`/connections/${target.id}/${section}`} replace />;
+    return <Navigate to={`/connections/${target.id}/contacts`} replace />;
   }
 
   return (
@@ -33,11 +30,7 @@ export function ConnectionRedirect({
       <EmptyState
         icon={<HubOutlinedIcon sx={{ fontSize: 38 }} />}
         title={t("connections.createFirstTitle")}
-        description={
-          section === "contacts"
-            ? t("connections.createFirstContacts")
-            : t("connections.createFirstMessages")
-        }
+        description={t("connections.createFirstContacts")}
         action={
           <Button component={Link} to="/connections" variant="contained">
             {t("connections.goToConnections")}

@@ -1,4 +1,8 @@
-import { Checkbox, FormHelperText } from "@mui/material";
+import { useMemo } from "react";
+import {
+  SearchableChecklist,
+  type ChecklistItem,
+} from "../../../components/ui/SearchableChecklist";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { displayPhone } from "../../../lib/phone";
 import type { Recipient } from "../../../types";
@@ -12,6 +16,7 @@ type RecipientPickerProps = {
   onChange: (ids: string[]) => void;
 };
 
+/** Escolha dos contatos de uma conexão, com busca por nome ou telefone. */
 export function RecipientPicker({
   choices,
   removedIds,
@@ -20,67 +25,28 @@ export function RecipientPicker({
   onChange,
 }: RecipientPickerProps) {
   const { t } = useI18n();
-  const allSelected = choices.length > 0 && value.length === choices.length;
-
-  const toggle = (id: string) =>
-    onChange(
-      value.includes(id) ? value.filter((item) => item !== id) : [...value, id],
-    );
-  const toggleAll = () =>
-    onChange(allSelected ? [] : choices.map((choice) => choice.id));
+  const items = useMemo<ChecklistItem[]>(
+    () =>
+      choices.map((choice) => ({
+        id: choice.id,
+        label: removedIds.has(choice.id)
+          ? `${choice.name} ${t("broadcasts.dialog.removed")}`
+          : choice.name,
+        hint: displayPhone(choice.phone),
+      })),
+    [choices, removedIds, t],
+  );
 
   return (
-    <div>
-      <div className="mb-2 flex items-center justify-between">
-        <p className="text-sm font-bold">
-          {t("broadcasts.dialog.recipients")}{" "}
-          <span className="font-normal text-muted">
-            {t("broadcasts.dialog.selected", { count: value.length })}
-          </span>
-        </p>
-        {choices.length > 1 && (
-          <button
-            type="button"
-            className="cursor-pointer text-sm font-bold text-brand hover:underline"
-            onClick={toggleAll}
-          >
-            {allSelected
-              ? t("broadcasts.dialog.clearSelection")
-              : t("broadcasts.dialog.selectAll")}
-          </button>
-        )}
-      </div>
-      <div
-        className={`max-h-44 overflow-y-auto rounded-xl border ${error ? "border-red-400" : "border-line-strong"}`}
-      >
-        {choices.length === 0 ? (
-          <p className="p-4 text-sm text-muted">
-            {t("broadcasts.dialog.noContacts")}
-          </p>
-        ) : (
-          choices.map((choice) => (
-            <label
-              key={choice.id}
-              className="flex cursor-pointer items-center gap-2 border-b border-line px-3 py-2 last:border-b-0 hover:bg-surface-hover"
-            >
-              <Checkbox
-                size="small"
-                checked={value.includes(choice.id)}
-                onChange={() => toggle(choice.id)}
-              />
-              <span className="flex-1 text-sm font-semibold">
-                {choice.name}
-                {removedIds.has(choice.id) &&
-                  ` ${t("broadcasts.dialog.removed")}`}
-              </span>
-              <span className="text-xs text-muted">
-                {displayPhone(choice.phone)}
-              </span>
-            </label>
-          ))
-        )}
-      </div>
-      {error && <FormHelperText error>{error}</FormHelperText>}
-    </div>
+    <SearchableChecklist
+      items={items}
+      value={value}
+      onChange={onChange}
+      error={error}
+      title={t("broadcasts.dialog.recipients")}
+      selectedLabel={t("broadcasts.dialog.selected", { count: value.length })}
+      searchLabel={t("broadcasts.dialog.searchContacts")}
+      emptyText={t("broadcasts.dialog.noContacts")}
+    />
   );
 }

@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate, useParams } from "react-router-dom";
 import { AppLayout } from "../../components/layout/AppLayout";
 import { ConnectionRedirect } from "../../features/connections/components/ConnectionRedirect";
 import { ConnectionScope } from "../../features/connections/components/ConnectionScope";
@@ -9,6 +9,12 @@ import { ProtectedRoute, PublicOnlyRoute } from "./guards";
 const lazyPage = (load: () => Promise<ComponentType>) => async () => ({
   Component: await load(),
 });
+
+// Links antigos (/connections/:id/broadcasts) levam à lista com o filtro dessa conexão.
+function BroadcastsOfConnection() {
+  const { connectionId } = useParams();
+  return <Navigate to={`/broadcasts?connection=${connectionId}`} replace />;
+}
 
 export const router = createBrowserRouter([
   {
@@ -56,11 +62,15 @@ export const router = createBrowserRouter([
           },
           {
             path: "contacts",
-            element: <ConnectionRedirect section="contacts" />,
+            element: <ConnectionRedirect />,
           },
           {
             path: "broadcasts",
-            element: <ConnectionRedirect section="broadcasts" />,
+            lazy: lazyPage(() =>
+              import("../../features/broadcasts/BroadcastsPage").then(
+                (m) => m.BroadcastsPage,
+              ),
+            ),
           },
           {
             path: "connections/:connectionId",
@@ -74,14 +84,7 @@ export const router = createBrowserRouter([
                   ),
                 ),
               },
-              {
-                path: "broadcasts",
-                lazy: lazyPage(() =>
-                  import("../../features/broadcasts/BroadcastsPage").then(
-                    (m) => m.BroadcastsPage,
-                  ),
-                ),
-              },
+              { path: "broadcasts", element: <BroadcastsOfConnection /> },
             ],
           },
         ],

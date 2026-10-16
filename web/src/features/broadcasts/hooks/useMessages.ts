@@ -11,28 +11,32 @@ import { db } from "../../../lib/firebase";
 import type { Message, MessageStatus } from "../../../types";
 
 type Options = {
+  /** Restringe a uma conexão; sem isso traz as de todas. */
+  connectionId?: string;
   /** Filtra no Firestore; sem isso traz enviadas e agendadas. */
   status?: MessageStatus;
   /** Quantidade máxima de mensagens carregadas (paginação por limite). */
   max: number;
 };
 
-/** Constraints comuns a todas as consultas de mensagens de uma conexão. */
-export const connectionMessagesConstraints = (
+/**
+ * Constraints comuns às consultas de mensagens. Sem `connectionId` traz as
+ * de todas as conexões do cliente.
+ */
+export const messagesConstraints = (
   tenantId: string,
-  connectionId: string,
+  connectionId?: string,
   status?: MessageStatus,
 ): QueryConstraint[] => {
-  const constraints = [
-    where("tenantId", "==", tenantId),
-    where("connectionId", "==", connectionId),
-  ];
+  const constraints = [where("tenantId", "==", tenantId)];
+  if (connectionId) constraints.push(where("connectionId", "==", connectionId));
   if (status) constraints.push(where("status", "==", status));
   return constraints;
 };
 
 /**
- * Mensagens de uma conexão, da mais recente para a mais antiga.
+ * Mensagens do cliente (de todas as conexões ou de uma), da mais recente para
+ * a mais antiga.
  *
  * Em vez de paginar com cursores, aumento o `limit` e a assinatura é refeita.
  * Assim a lista continua em tempo real (onSnapshot) mesmo com "carregar mais".
@@ -40,14 +44,13 @@ export const connectionMessagesConstraints = (
  */
 export function useMessages(
   tenantId: string,
-  connectionId: string,
-  { status, max }: Options,
+  { connectionId, status, max }: Options,
 ) {
   const { items, loading, error } = useFirestoreQuery<Message>(
     () =>
       query(
         collection(db, "messages"),
-        ...connectionMessagesConstraints(tenantId, connectionId, status),
+        ...messagesConstraints(tenantId, connectionId, status),
         orderBy("createdAt", "desc"),
         limit(max),
       ),

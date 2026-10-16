@@ -78,7 +78,7 @@ export function ContactsPage() {
         description={t("contacts.subtitle")}
         actions={
           <>
-            <ConnectionSelect section="contacts" />
+            <ConnectionSelect />
             {contacts.length > 0 && (
               <Button
                 variant="contained"

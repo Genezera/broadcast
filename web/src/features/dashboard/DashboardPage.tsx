@@ -13,6 +13,7 @@ import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import { ListSkeleton } from "../../components/ui/ListSkeleton";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { StatusChip } from "../../components/ui/StatusChip";
+import { stripFormatting } from "../../lib/formatting";
 import { useI18n } from "../../i18n/I18nProvider";
 import { useCurrentUser } from "../auth/AuthProvider";
 import { useRecentMessages } from "../broadcasts/hooks/useMessages";
@@ -200,7 +201,9 @@ export function DashboardPage() {
                     )}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{message.body}</p>
+                    <p className="truncate font-semibold">
+                      {stripFormatting(message.body)}
+                    </p>
                     <p className="text-xs text-muted">
                       {connectionNames.get(message.connectionId) ??
                         t("dashboard.recent.connectionFallback")}{" "}
