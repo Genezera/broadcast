@@ -228,4 +228,3 @@ O Hosting serve `web/dist` com fallback para `index.html` (SPA). Registre dois u
 - **Paginação:** mensagens carregam 20 por vez ("Carregar mais"), aumentando o `limit` da consulta para continuar em tempo real. Contatos carregam inteiros por conexão, porque a busca e o seletor de destinatários dependem da lista completa.
 - **Contagens do painel e dos filtros:** usam agregação no servidor (`getCountFromServer`), atualizada quando a lista visível muda e a cada 30 s. Não são em tempo real como as listas.
 - **Dependências:** `npm audit --omit=dev` retorna 0 alertas (o `@grpc/grpc-js` é fixado em versão corrigida via `overrides`). Os alertas restantes vêm apenas do CLI `firebase-tools`, que não faz parte do app publicado.
-- O projeto é um teste prático: não há envio externo, cobrança ou integração com gateways.
