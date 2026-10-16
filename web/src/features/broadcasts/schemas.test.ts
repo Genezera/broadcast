@@ -93,4 +93,22 @@ describe("messageSchema", () => {
       messages({ ...valid, mode: "scheduled", scheduledAt: future }),
     ).toEqual([]);
   });
+
+  it("keeps the schedule a message already had, even if it just passed", () => {
+    const justPassed = toLocalInputValue(new Date(Date.now() - 30_000));
+    const edited = messageSchema(translators.pt, justPassed);
+    const values = {
+      ...valid,
+      mode: "scheduled" as const,
+      scheduledAt: justPassed,
+    };
+    expect(edited.safeParse(values).success).toBe(true);
+    // Sem a data original, a mesma data seria recusada.
+    expect(schema.safeParse(values).success).toBe(false);
+    // Mudar para outra data passada continua inválido.
+    const other = toLocalInputValue(new Date(Date.now() - 7_200_000));
+    expect(edited.safeParse({ ...values, scheduledAt: other }).success).toBe(
+      false,
+    );
+  });
 });

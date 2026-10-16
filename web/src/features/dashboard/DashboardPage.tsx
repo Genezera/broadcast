@@ -6,6 +6,7 @@ import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import SendOutlinedIcon from "@mui/icons-material/SendOutlined";
 import { EmptyState } from "../../components/ui/EmptyState";
@@ -192,10 +193,12 @@ export function DashboardPage() {
                   style={{ ["--i" as string]: index }}
                 >
                   <span
-                    className={`metric-icon !h-10 !w-10 ${sent ? "bg-success-soft text-success" : "bg-info-soft text-info"}`}
+                    className={`metric-icon !h-10 !w-10 ${sent ? "bg-success-soft text-success" : message.status === "failed" ? "bg-warning-soft text-warning" : "bg-info-soft text-info"}`}
                   >
                     {sent ? (
                       <CheckCircleOutlineIcon fontSize="small" />
+                    ) : message.status === "failed" ? (
+                      <ErrorOutlineIcon fontSize="small" />
                     ) : (
                       <ScheduleIcon fontSize="small" />
                     )}

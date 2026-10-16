@@ -59,7 +59,7 @@ export function MessageDetailDialog({
     );
   }, [message, query]);
 
-  const scheduled = message?.status === "scheduled";
+  const sent = message?.status === "sent";
 
   return (
     <Dialog
@@ -94,15 +94,13 @@ export function MessageDetailDialog({
               </div>
               <div>
                 <dt className="inline font-bold">
-                  {scheduled
-                    ? t("broadcasts.detail.scheduledFor")
-                    : t("broadcasts.detail.sentAt")}
+                  {sent
+                    ? t("broadcasts.detail.sentAt")
+                    : t("broadcasts.detail.scheduledFor")}
                   :{" "}
                 </dt>
                 <dd className="inline">
-                  {formatDateTime(
-                    scheduled ? message.scheduledAt : message.sentAt,
-                  )}
+                  {formatDateTime(sent ? message.sentAt : message.scheduledAt)}
                 </dd>
               </div>
             </dl>

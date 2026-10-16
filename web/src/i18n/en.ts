@@ -81,6 +81,7 @@ export const en: Dictionary = {
   status: {
     sent: "Sent",
     scheduled: "Scheduled",
+    failed: "Failed",
     active: "Active",
     deleting: "Deleting",
   },

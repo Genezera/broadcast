@@ -96,9 +96,15 @@ export function MessageDialog({
   const editing = target && target !== "new" ? target : null;
   const alreadySent = editing?.status === "sent";
 
+  // Ao editar uma agendada, o horário que ela já tem continua válido.
+  const originalSchedule =
+    editing?.status === "scheduled" && editing.scheduledAt
+      ? toLocalInputValue(editing.scheduledAt.toDate())
+      : "";
+
   const { control, handleSubmit, reset, watch, setValue, trigger, formState } =
     useForm<MessageFormValues>({
-      resolver: zodResolver(messageSchema(t)),
+      resolver: zodResolver(messageSchema(t, originalSchedule)),
       defaultValues: valuesFor(null, connections, defaultConnectionId),
     });
 

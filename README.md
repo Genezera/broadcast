@@ -94,13 +94,13 @@ Para incluir um idioma novo, é preciso adicionar o dicionário, o texto da ajud
 
 Cinco coleções **na raiz**, sem subcoleções. Os relacionamentos são feitos por IDs e todo documento carrega o `tenantId`.
 
-| Coleção         | Documento (campos além dos timestamps)                                                                                                      | Quem escreve                                          |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `tenants`       | ID = `uid`; `email`, `name`, `photoData`                                                                                                    | Cliente (cria o próprio perfil; edita só nome e foto) |
-| `connections`   | `tenantId`, `name`, `status` (`active` \| `deleting`)                                                                                       | Cliente (criar/renomear); Function (excluir)          |
-| `contacts`      | `tenantId`, `connectionId`, `name`, `phone`                                                                                                 | Cliente                                               |
-| `messages`      | `tenantId`, `connectionId`, `body`, `contactIds`, `recipients[]`, `status`, `scheduledAt`, `sentAt`                                         | **Somente Cloud Functions**                           |
-| `notifications` | ID = o da mensagem; `tenantId`, `type`, `messageId`, `connectionId`, `connectionName`, `recipientCount`, `scheduled`, `bodyPreview`, `read` | Functions criam; o cliente só marca `read` e apaga    |
+| Coleção         | Documento (campos além dos timestamps)                                                                                                              | Quem escreve                                          |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `tenants`       | ID = `uid`; `email`, `name`, `photoData`                                                                                                            | Cliente (cria o próprio perfil; edita só nome e foto) |
+| `connections`   | `tenantId`, `name`, `status` (`active` \| `deleting`)                                                                                               | Cliente (criar/renomear); Function (excluir)          |
+| `contacts`      | `tenantId`, `connectionId`, `name`, `phone`                                                                                                         | Cliente                                               |
+| `messages`      | `tenantId`, `connectionId`, `body`, `contactIds`, `recipients[]`, `status` (`scheduled` \| `sent` \| `failed`), `attempts`, `scheduledAt`, `sentAt` | **Somente Cloud Functions**                           |
+| `notifications` | ID = o da mensagem; `tenantId`, `type`, `messageId`, `connectionId`, `connectionName`, `recipientCount`, `scheduled`, `bodyPreview`, `read`         | Functions criam; o cliente só marca `read` e apaga    |
 
 Decisões:
 
@@ -140,24 +140,26 @@ Firestore onSnapshot → a interface atualiza sozinha, se estiver aberta
 - **Idempotência e concorrência:** a transação relê o documento; mensagem já enviada, reagendada para o futuro ou excluída não é alterada nem recriada. Execuções sobrepostas enviam cada mensagem **uma única vez**.
 - **Lotes controlados** (100 por página, até 20 páginas por execução) e `Promise.allSettled`, para que uma falha não bloqueie as demais.
 - **Fuso horário:** o formulário usa o horário local do navegador e envia ISO 8601 em UTC.
+- **Mensagem que não consegue ser enviada:** o erro é registrado e a falha é contada (`recordFailure`); passadas 5 tentativas ela vira `failed` e a varredura deixa de tocar nela, então uma mensagem "envenenada" não ocupa a fila.
 - **Logs estruturados** (`message_created`, `scheduled_message_sent`, `scheduled_message_failed`, ...) sem o conteúdo das mensagens.
 
 ## Regras de negócio
 
-| Situação                            | Comportamento                                                                                                                                  |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Mensagem sem contatos / vazia       | Rejeitada (cliente e servidor)                                                                                                                 |
-| Agendar no passado ou além de 1 ano | Rejeitado                                                                                                                                      |
-| Envio imediato                      | Gravada direto como `sent`                                                                                                                     |
-| Envio para conexões                 | Uma mensagem por conexão, para todos os contatos dela; conexões sem contatos são puladas (erro se nenhuma tiver contatos); tudo numa transação |
-| Notificações                        | Uma por mensagem enviada (imediata ou agendada); lida/removida pelo cliente                                                                    |
-| Mensagem agendada                   | Gravada como `scheduled`; vira `sent` pelo backend no horário                                                                                  |
-| Editar mensagem agendada            | Permite alterar conteúdo, contatos e horário futuro                                                                                            |
-| Excluir mensagem agendada           | Removida; o agendador não a recria nem envia                                                                                                   |
-| Editar mensagem enviada             | Altera só o registro; não reenvia nem volta a ser agendada                                                                                     |
-| Excluir conexão                     | `deleteConnection` marca `deleting` (bloqueia escritas), apaga contatos e mensagens e, por fim, a conexão; pode ser repetida se interrompida   |
-| Contato excluído                    | Histórico preservado pelos snapshots dos destinatários                                                                                         |
-| Limites                             | Até 500 destinatários por mensagem (e 500 contatos por conexão no envio em massa), até 20 conexões por envio e 2.000 caracteres por mensagem   |
+| Situação                            | Comportamento                                                                                                                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mensagem sem contatos / vazia       | Rejeitada (cliente e servidor)                                                                                                                                                  |
+| Agendar no passado ou além de 1 ano | Rejeitado                                                                                                                                                                       |
+| Envio imediato                      | Gravada direto como `sent`                                                                                                                                                      |
+| Envio para conexões                 | Uma mensagem por conexão, para todos os contatos dela; conexões sem contatos são puladas (erro se nenhuma tiver contatos); tudo numa transação                                  |
+| Notificações                        | Uma por mensagem enviada (imediata ou agendada); lida/removida pelo cliente                                                                                                     |
+| Mensagem agendada                   | Gravada como `scheduled`; vira `sent` pelo backend no horário                                                                                                                   |
+| Editar mensagem agendada            | Permite alterar conteúdo, contatos e horário futuro. Se o horário acabou de passar e o agendador ainda não rodou (até ~1 min), dá para editar o texto mantendo a mesma data     |
+| Excluir mensagem agendada           | Removida; o agendador não a recria nem envia                                                                                                                                    |
+| Envio agendado que falha            | Cada falha soma em `attempts`; depois de 5 tentativas a mensagem vira `failed` ("Falhou") e sai da fila, em vez de ser tentada para sempre. Editar a mensagem a recoloca em uso |
+| Editar mensagem enviada             | Altera só o registro; não reenvia nem volta a ser agendada                                                                                                                      |
+| Excluir conexão                     | `deleteConnection` marca `deleting` (bloqueia escritas), apaga contatos e mensagens e, por fim, a conexão; pode ser repetida se interrompida                                    |
+| Contato excluído                    | Histórico preservado pelos snapshots dos destinatários                                                                                                                          |
+| Limites                             | Até 500 destinatários por mensagem (e 500 contatos por conexão no envio em massa), até 20 conexões por envio e 2.000 caracteres por mensagem                                    |
 
 ## Como executar
 
@@ -198,11 +200,11 @@ npm run test:rules       # (opcional) apenas Security Rules
 npm run test:functions   # (opcional) apenas Functions e agendador
 ```
 
-São **175 testes automatizados**: 143 no frontend, 5 nos validadores do backend e 27 de integração com o emulador.
+São **212 testes automatizados**: 178 no frontend, 5 nos validadores do backend e 29 de integração com o emulador.
 
 - **Rules:** isolamento entre tenants (leitura e escrita), spoofing e troca de `tenantId` ou `connectionId`, contato apontando para conexão alheia, escrita de mensagens bloqueada, perfil `tenants`, conexões em exclusão e `notifications` (só o dono lê e marca como lida, ninguém cria pelo cliente).
 - **Functions:** validação de entrada, destinatários de outro tenant ou conexão, edição de mensagens, agendamento sem navegador, reagendamento contra varredura antiga, varreduras concorrentes (envio único), mensagem excluída, cascata de exclusão, envio para várias conexões e notificações (criação única, agendador e exclusão). Os erros devolvem a chave estável para tradução.
-- **Frontend:** formatação de texto (marcadores, conversão para o editor e segurança contra HTML), editor com estilos ao vivo, listas com busca, notificações, schemas, telefone, datas, imagem de perfil, nome de exibição, navegação, mensagens de erro, diálogo de confirmação, campo de telefone e assistente de ajuda.
+- **Frontend:** telas principais (Broadcast e o diálogo de mensagem: alcance, busca, agendamento, edição, filtros, detalhes e exclusão), o hook de tempo real, formatação de texto (marcadores, conversão para o editor e segurança contra HTML), editor com estilos ao vivo, listas com busca, notificações, schemas, telefone, datas, imagem de perfil, nome de exibição, navegação, mensagens de erro, diálogo de confirmação, campo de telefone e assistente de ajuda.
 - **Idiomas:** paridade dos dois dicionários (mesmas chaves, mesmos `{parâmetros}`, plurais completos), interpolação e plural, persistência da troca de idioma, conteúdo da ajuda nos dois idiomas e cobertura de todas as chaves de erro do backend.
 
 ## Publicação
@@ -213,7 +215,7 @@ npx firebase use --add          # selecione o projeto
 npx firebase deploy --only firestore,functions,hosting
 ```
 
-O Hosting serve `web/dist` com fallback para `index.html` (SPA). Registre dois usuários distintos no app publicado para demonstrar o isolamento. O build de produção lê a configuração do app Web em `web/.env.production` (ou `web/.env.local`), que não vai para o repositório; use `web/.env.example` como modelo. São valores públicos: a segurança vem das Security Rules, não do sigilo dessas chaves.
+O Hosting serve `web/dist` com fallback para `index.html` (SPA). O `index.html` e as demais páginas saem com `Cache-Control: no-cache` (um deploy novo vale na hora) e os arquivos de `/assets` com cache longo e imutável, porque o nome deles muda a cada build. Registre dois usuários distintos no app publicado para demonstrar o isolamento. O build de produção lê a configuração do app Web em `web/.env.production` (ou `web/.env.local`), que não vai para o repositório; use `web/.env.example` como modelo. São valores públicos: a segurança vem das Security Rules, não do sigilo dessas chaves.
 
 ## Decisões e limitações
 

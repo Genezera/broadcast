@@ -2,6 +2,7 @@ import { Chip, IconButton, Tooltip } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import SendOutlinedIcon from "@mui/icons-material/SendOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
@@ -33,7 +34,8 @@ export function MessageItem({
   onDelete,
 }: MessageItemProps) {
   const { t, formatDateTime } = useI18n();
-  const scheduled = message.status === "scheduled";
+  const sent = message.status === "sent";
+  const failed = message.status === "failed";
   const names = message.recipients.map((recipient) => recipient.name);
   const summary =
     names.slice(0, PREVIEW_NAMES).join(", ") +
@@ -45,9 +47,15 @@ export function MessageItem({
       style={{ ["--i" as string]: index }}
     >
       <span
-        className={`metric-icon shrink-0 ${scheduled ? "bg-info-soft text-info" : "bg-success-soft text-success"}`}
+        className={`metric-icon shrink-0 ${sent ? "bg-success-soft text-success" : failed ? "bg-warning-soft text-warning" : "bg-info-soft text-info"}`}
       >
-        {scheduled ? <ScheduleIcon /> : <SendOutlinedIcon />}
+        {sent ? (
+          <SendOutlinedIcon />
+        ) : failed ? (
+          <ErrorOutlineIcon />
+        ) : (
+          <ScheduleIcon />
+        )}
       </span>
       <div className="min-w-0 flex-1">
         <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -62,12 +70,10 @@ export function MessageItem({
           )}
           <span className="text-xs text-muted">
             {t(
-              scheduled
-                ? "broadcasts.item.scheduledFor"
-                : "broadcasts.item.sentAt",
+              sent ? "broadcasts.item.sentAt" : "broadcasts.item.scheduledFor",
               {
                 date: formatDateTime(
-                  scheduled ? message.scheduledAt : message.sentAt,
+                  sent ? message.sentAt : message.scheduledAt,
                 ),
               },
             )}

@@ -1,5 +1,6 @@
 import { Chip } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import { useT } from "../../i18n/I18nProvider";
 import type { MessageStatus } from "../../types";
@@ -12,6 +13,10 @@ const STATUS = {
   scheduled: {
     icon: <ScheduleIcon />,
     className: "bg-info-soft text-info",
+  },
+  failed: {
+    icon: <ErrorOutlineIcon />,
+    className: "bg-warning-soft text-warning",
   },
 } as const;
 

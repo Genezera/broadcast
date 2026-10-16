@@ -5,7 +5,8 @@ import type { Timestamp } from "firebase/firestore";
  * injetado na leitura; os relacionamentos são feitos por IDs.
  */
 export type ConnectionStatus = "active" | "deleting";
-export type MessageStatus = "scheduled" | "sent";
+// "failed": o agendador desistiu de enviar depois de várias tentativas.
+export type MessageStatus = "scheduled" | "sent" | "failed";
 export type SendMode = "now" | "scheduled";
 
 export type Connection = {

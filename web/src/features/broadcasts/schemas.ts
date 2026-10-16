@@ -9,7 +9,12 @@ export const MAX_CONNECTIONS = 20;
 
 export type Audience = "contacts" | "connections";
 
-export const messageSchema = (t: Translator) =>
+/**
+ * `originalSchedule` é o horário que a mensagem já tinha ao ser editada. Se o
+ * horário não foi mexido, ele continua valendo mesmo que já tenha passado (o
+ * agendador leva até ~1 minuto para enviar), então só o texto pode ser editado.
+ */
+export const messageSchema = (t: Translator, originalSchedule = "") =>
   z
     .object({
       /** `contacts`: contatos escolhidos de uma conexão. `connections`: todos os contatos das conexões escolhidas. */
@@ -59,7 +64,10 @@ export const messageSchema = (t: Translator) =>
       if (values.mode !== "scheduled") return;
       if (!values.scheduledAt) {
         issue("scheduledAt", t("broadcasts.validation.dateRequired"));
-      } else if (!isFuture(values.scheduledAt)) {
+      } else if (
+        values.scheduledAt !== originalSchedule &&
+        !isFuture(values.scheduledAt)
+      ) {
         issue("scheduledAt", t("broadcasts.validation.dateFuture"));
       }
     });

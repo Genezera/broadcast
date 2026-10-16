@@ -83,6 +83,7 @@ export const pt = {
   status: {
     sent: "Enviada",
     scheduled: "Agendada",
+    failed: "Falhou",
     active: "Ativa",
     deleting: "Excluindo",
   },
