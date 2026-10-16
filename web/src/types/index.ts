@@ -52,3 +52,23 @@ export type TenantProfile = {
   createdAt: Timestamp;
   updatedAt: Timestamp;
 };
+
+/**
+ * Aviso de "mensagem enviada". Criado só pelas Cloud Functions (o ID é o da
+ * mensagem); o cliente lê, marca como lido e apaga.
+ */
+export type AppNotification = {
+  id: string;
+  tenantId: string;
+  type: "message_sent";
+  messageId: string;
+  connectionId: string;
+  connectionName: string;
+  recipientCount: number;
+  /** `true` quando a mensagem estava agendada e foi enviada pelo agendador. */
+  scheduled: boolean;
+  /** Começo do texto, ainda com os marcadores de formatação. */
+  bodyPreview: string;
+  read: boolean;
+  createdAt: Timestamp;
+};

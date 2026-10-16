@@ -16,6 +16,8 @@ import {
 } from "../../features/profile/ProfileProvider";
 import { BrandMark } from "../ui/BrandMark";
 import { useT } from "../../i18n/I18nProvider";
+import { NotificationBell } from "../../features/notifications/NotificationBell";
+import { NotificationsProvider } from "../../features/notifications/NotificationsProvider";
 import { LanguageToggle } from "../ui/LanguageToggle";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { AccountMenu } from "./AccountMenu";
@@ -182,6 +184,7 @@ function Shell() {
                 {t("nav.hello", { name: firstName(name) })}
               </span>
               <LanguageToggle />
+              <NotificationBell />
               <ThemeToggle />
               <AccountMenu />
             </div>
@@ -206,7 +209,9 @@ export function AppLayout() {
   return (
     <ProfileProvider tenantId={user.uid}>
       <ConnectionsProvider tenantId={user.uid}>
-        <Shell />
+        <NotificationsProvider tenantId={user.uid}>
+          <Shell />
+        </NotificationsProvider>
       </ConnectionsProvider>
     </ProfileProvider>
   );
