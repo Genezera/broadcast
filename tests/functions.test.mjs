@@ -399,15 +399,12 @@ const seedNotificationData = async () => {
       .doc(id)
       .set({ tenantId: "alice", name, status: "active" });
   const contact = (id, connectionId, name) =>
-    db
-      .collection("contacts")
-      .doc(id)
-      .set({
-        tenantId: "alice",
-        connectionId,
-        name,
-        phone: "+55 11 90000-0000",
-      });
+    db.collection("contacts").doc(id).set({
+      tenantId: "alice",
+      connectionId,
+      name,
+      phone: "+55 11 90000-0000",
+    });
   await Promise.all([
     conn("n-conn-a", "Alice"),
     conn("n-conn-b", "Outra"),

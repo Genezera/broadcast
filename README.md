@@ -10,19 +10,22 @@ Publicado em: https://broadcast-renan-2026.web.app
 
 ## O que o sistema faz
 
-| Área                   | O que tem                                                                                                                                                                                   |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Conexões**           | Criar, renomear e excluir (com exclusão em cascata). Cada conexão tem os seus contatos e mensagens.                                                                                         |
-| **Contatos**           | CRUD com busca por nome ou telefone. Campo de telefone com bandeira do país, DDI e máscara aplicada enquanto digita; o valor é salvo no formato internacional.                              |
-| **Broadcast**          | Criar mensagem para um ou mais contatos, enviar agora ou agendar, editar, excluir e filtrar por status. Lista em tempo real.                                                                |
-| **Agendamento**        | Uma Cloud Function roda a cada minuto e muda `Agendada` para `Enviada`, mesmo com o navegador fechado.                                                                                      |
-| **Painel**             | Totais de conexões, contatos, enviadas e agendadas, e as mensagens mais recentes.                                                                                                           |
-| **Conta**              | Nome no cadastro, página Minha conta (editar nome, enviar ou remover foto, trocar a senha confirmando a atual) e recuperação de senha por e-mail.                                           |
-| **Português e inglês** | O sistema inteiro nos dois idiomas, com seletor **PT \| EN** no cabeçalho e na tela de login. A escolha fica salva, o idioma do navegador é o padrão e a troca é animada.                   |
-| **Modo escuro**        | Botão no cabeçalho e no login. Segue o tema do sistema na primeira visita, lembra a escolha e troca com uma revelação circular animada.                                                     |
-| **Ajuda**              | Assistente guiado por botões (sem digitar) que já sugere o assunto da tela atual, mais uma aba de perguntas frequentes. Também troca de idioma.                                             |
-| **Responsivo**         | Celular (barra inferior, listas em cards, diálogos em tela cheia), tablet (menu lateral só com ícones) e desktop (menu completo).                                                           |
-| **Animações**          | Splash com painel que abre para a direita, transições de página, entrada escalonada de listas, diálogos com _grow_, skeletons e barra de progresso. Tudo respeita `prefers-reduced-motion`. |
+| Área                   | O que tem                                                                                                                                                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Conexões**           | Criar, renomear e excluir (com exclusão em cascata). Cada conexão tem os seus contatos e mensagens.                                                                                                                                                    |
+| **Contatos**           | CRUD com busca por nome ou telefone. Campo de telefone com bandeira do país, DDI e máscara aplicada enquanto digita; o valor é salvo no formato internacional.                                                                                         |
+| **Broadcast**          | Lista de **todas** as mensagens, com filtro por conexão (Todas ou uma) e por status (Todas, Enviadas, Agendadas). Cada mensagem abre em Ver detalhes, com o texto completo e a lista de destinatários (com busca). Criar, editar, excluir. Tempo real. |
+| **Alcance do envio**   | Em Nova mensagem: **Contatos** (uma conexão e os contatos que quiser, com busca e Selecionar todos) ou **Conexões** (todos os contatos de cada conexão marcada, com busca; sai uma mensagem por conexão). Listas longas rolam dentro do diálogo.       |
+| **Texto formatado**    | Negrito, itálico, sublinhado e riscado, por botões, atalhos (Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+Shift+X) ou digitando `*negrito*`, `_itálico_`, `__sublinhado__`, `~riscado~`. Tem prévia no diálogo e aparece formatado na lista e nos detalhes.            |
+| **Notificações**       | Sino no cabeçalho com contador de não lidas. Toda mensagem enviada, na hora ou pelo agendador, gera uma notificação (e um aviso na tela se o app estiver aberto). Dá para marcar como lida, remover e limpar.                                          |
+| **Agendamento**        | Calendário e relógio no estilo do app (claro e escuro, em português e inglês). Uma Cloud Function roda a cada minuto e muda `Agendada` para `Enviada`, mesmo com o navegador fechado.                                                                  |
+| **Painel**             | Totais de conexões, contatos, enviadas e agendadas, e as mensagens mais recentes.                                                                                                                                                                      |
+| **Conta**              | Nome no cadastro, página Minha conta (editar nome, enviar ou remover foto, trocar a senha confirmando a atual) e recuperação de senha por e-mail.                                                                                                      |
+| **Português e inglês** | O sistema inteiro nos dois idiomas, com seletor **PT \| EN** no cabeçalho e na tela de login. A escolha fica salva, o idioma do navegador é o padrão e a troca é animada.                                                                              |
+| **Modo escuro**        | Botão no cabeçalho e no login. Segue o tema do sistema na primeira visita, lembra a escolha e troca com uma revelação circular animada.                                                                                                                |
+| **Ajuda**              | Assistente guiado por botões (sem digitar) que já sugere o assunto da tela atual, mais uma aba de perguntas frequentes. Também troca de idioma.                                                                                                        |
+| **Responsivo**         | Celular (barra inferior, listas em cards, diálogos em tela cheia), tablet (menu lateral só com ícones) e desktop (menu completo).                                                                                                                      |
+| **Animações**          | Splash com painel que abre para a direita, transições de página, entrada escalonada de listas, diálogos com _grow_, skeletons e barra de progresso. Tudo respeita `prefers-reduced-motion`.                                                            |
 
 ## Sumário
 
@@ -51,19 +54,20 @@ Publicado em: https://broadcast-renan-2026.web.app
 │       │   ├── contacts/        # CRUD de contatos
 │       │   ├── broadcasts/      # Mensagens: criar, editar, excluir, filtrar
 │       │   ├── dashboard/       # Indicadores e mensagens recentes
-│       │   └── help/            # Assistente de ajuda e perguntas frequentes
+│       │   ├── help/            # Assistente de ajuda e perguntas frequentes
+│       │   └── notifications/   # Sino, lista e avisos em tempo real
 │       │       (cada feature: components/, hooks/, services/, schemas.ts)
 │       ├── components/          # layout/ (shell) e ui/ (peças reutilizáveis)
 │       ├── i18n/                # Dicionários pt/en, tradutor e provider
 │       ├── hooks/               # useFirestoreQuery (onSnapshot genérico)
-│       ├── lib/                 # firebase, erros, datas, telefone, imagem, ordenação
+│       ├── lib/                 # firebase, erros, datas, telefone, imagem, formatação de texto, ordenação
 │       └── types/               # Tipos do modelo de dados
 ├── functions/                   # Cloud Functions
 │   └── src/
-│       ├── messages/            # createMessage, updateMessage, deleteMessage
+│       ├── messages/            # createMessage (contatos ou conexões), updateMessage, deleteMessage
 │       ├── connections/         # deleteConnection (cascata)
 │       ├── scheduled/           # processScheduledMessages
-│       └── shared/              # validators (Zod), authorization, errors, tipos
+│       └── shared/              # validators (Zod), authorization, errors, notifications, tipos
 ├── tests/                       # Regras do Firestore, Functions e validadores
 ├── firestore.rules
 ├── firestore.indexes.json
@@ -88,22 +92,25 @@ Para incluir um idioma novo, é preciso adicionar o dicionário, o texto da ajud
 
 ## Modelagem do Firestore
 
-Quatro coleções **na raiz**, sem subcoleções. Os relacionamentos são feitos por IDs e todo documento carrega o `tenantId`.
+Cinco coleções **na raiz**, sem subcoleções. Os relacionamentos são feitos por IDs e todo documento carrega o `tenantId`.
 
-| Coleção       | Documento (campos além dos timestamps)                                                              | Quem escreve                                          |
-| ------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `tenants`     | ID = `uid`; `email`, `name`, `photoData`                                                            | Cliente (cria o próprio perfil; edita só nome e foto) |
-| `connections` | `tenantId`, `name`, `status` (`active` \| `deleting`)                                               | Cliente (criar/renomear); Function (excluir)          |
-| `contacts`    | `tenantId`, `connectionId`, `name`, `phone`                                                         | Cliente                                               |
-| `messages`    | `tenantId`, `connectionId`, `body`, `contactIds`, `recipients[]`, `status`, `scheduledAt`, `sentAt` | **Somente Cloud Functions**                           |
+| Coleção         | Documento (campos além dos timestamps)                                                                                                      | Quem escreve                                          |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `tenants`       | ID = `uid`; `email`, `name`, `photoData`                                                                                                    | Cliente (cria o próprio perfil; edita só nome e foto) |
+| `connections`   | `tenantId`, `name`, `status` (`active` \| `deleting`)                                                                                       | Cliente (criar/renomear); Function (excluir)          |
+| `contacts`      | `tenantId`, `connectionId`, `name`, `phone`                                                                                                 | Cliente                                               |
+| `messages`      | `tenantId`, `connectionId`, `body`, `contactIds`, `recipients[]`, `status`, `scheduledAt`, `sentAt`                                         | **Somente Cloud Functions**                           |
+| `notifications` | ID = o da mensagem; `tenantId`, `type`, `messageId`, `connectionId`, `connectionName`, `recipientCount`, `scheduled`, `bodyPreview`, `read` | Functions criam; o cliente só marca `read` e apaga    |
 
 Decisões:
 
 - **Denormalização controlada:** `tenantId` em todas as coleções simplifica consultas e regras.
+- **Uma mensagem pertence a uma conexão.** Enviar para várias conexões cria uma mensagem por conexão (cada uma com o snapshot dos contatos daquela conexão), então listas, filtros, regras e exclusão em cascata continuam simples.
+- **Notificação 1:1 com a mensagem:** o ID da notificação é o ID da mensagem. Assim o envio imediato, o agendador e a edição de agendada para "enviar agora" nunca geram avisos duplicados, e excluir a mensagem (ou a conexão) apaga o aviso junto.
 - **Snapshot de destinatários:** `recipients` guarda `{id, name, phone}` no momento do envio; o histórico continua legível se o contato for editado ou excluído.
 - **Relacionamentos imutáveis:** `tenantId` e `connectionId` não podem ser alterados após a criação.
 - **Horários do servidor:** `createdAt`, `updatedAt` e `sentAt` usam `serverTimestamp()`; `scheduledAt` é um `Timestamp` (instante UTC absoluto).
-- **Índices compostos** (`firestore.indexes.json`): mensagens por conexão (com e sem filtro de status), mensagens recentes do cliente ordenadas por `createdAt` e a varredura do agendador (`status` + `scheduledAt`). O emulador não exige índices; só o Firestore real, por isso o deploy de `firestore` vem antes do uso.
+- **Índices compostos** (`firestore.indexes.json`): mensagens por conexão (com e sem filtro de status), mensagens do cliente (com e sem filtro de status) ordenadas por `createdAt`, notificações do cliente por `createdAt` e a varredura do agendador (`status` + `scheduledAt`). O emulador não exige índices; só o Firestore real, por isso o deploy de `firestore` vem antes do uso.
 
 ## Isolamento entre clientes
 
@@ -116,6 +123,7 @@ O isolamento é garantido no backend, não pela interface:
 5. As respostas de "não encontrado" são iguais para documentos inexistentes e de outro cliente, sem revelar a existência.
 6. No frontend, abrir por URL a conexão de outro cliente mostra "Conexão não encontrada".
 7. O perfil em `tenants` só aceita editar `name`, `photoData` e `updatedAt`; o e-mail é fixado na criação.
+8. `notifications` só é lida pelo dono (`tenantId`), não pode ser criada pelo cliente e o único campo que ele altera é `read`.
 
 ## Agendamento no backend
 
@@ -128,6 +136,7 @@ Firestore onSnapshot → a interface atualiza sozinha, se estiver aberta
 ```
 
 - Roda no servidor, **sem depender do navegador**.
+- Ao enviar, a mesma transação grava a notificação da mensagem. O app, se estiver aberto, mostra o aviso na hora via `onSnapshot`; se estiver fechado, a notificação espera no sino.
 - **Idempotência e concorrência:** a transação relê o documento; mensagem já enviada, reagendada para o futuro ou excluída não é alterada nem recriada. Execuções sobrepostas enviam cada mensagem **uma única vez**.
 - **Lotes controlados** (100 por página, até 20 páginas por execução) e `Promise.allSettled`, para que uma falha não bloqueie as demais.
 - **Fuso horário:** o formulário usa o horário local do navegador e envia ISO 8601 em UTC.
@@ -135,18 +144,20 @@ Firestore onSnapshot → a interface atualiza sozinha, se estiver aberta
 
 ## Regras de negócio
 
-| Situação                            | Comportamento                                                                                                                                |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Mensagem sem contatos / vazia       | Rejeitada (cliente e servidor)                                                                                                               |
-| Agendar no passado ou além de 1 ano | Rejeitado                                                                                                                                    |
-| Envio imediato                      | Gravada direto como `sent`                                                                                                                   |
-| Mensagem agendada                   | Gravada como `scheduled`; vira `sent` pelo backend no horário                                                                                |
-| Editar mensagem agendada            | Permite alterar conteúdo, contatos e horário futuro                                                                                          |
-| Excluir mensagem agendada           | Removida; o agendador não a recria nem envia                                                                                                 |
-| Editar mensagem enviada             | Altera só o registro; não reenvia nem volta a ser agendada                                                                                   |
-| Excluir conexão                     | `deleteConnection` marca `deleting` (bloqueia escritas), apaga contatos e mensagens e, por fim, a conexão; pode ser repetida se interrompida |
-| Contato excluído                    | Histórico preservado pelos snapshots dos destinatários                                                                                       |
-| Limites                             | 1 a 100 destinatários, até 2.000 caracteres por mensagem                                                                                     |
+| Situação                            | Comportamento                                                                                                                                  |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mensagem sem contatos / vazia       | Rejeitada (cliente e servidor)                                                                                                                 |
+| Agendar no passado ou além de 1 ano | Rejeitado                                                                                                                                      |
+| Envio imediato                      | Gravada direto como `sent`                                                                                                                     |
+| Envio para conexões                 | Uma mensagem por conexão, para todos os contatos dela; conexões sem contatos são puladas (erro se nenhuma tiver contatos); tudo numa transação |
+| Notificações                        | Uma por mensagem enviada (imediata ou agendada); lida/removida pelo cliente                                                                    |
+| Mensagem agendada                   | Gravada como `scheduled`; vira `sent` pelo backend no horário                                                                                  |
+| Editar mensagem agendada            | Permite alterar conteúdo, contatos e horário futuro                                                                                            |
+| Excluir mensagem agendada           | Removida; o agendador não a recria nem envia                                                                                                   |
+| Editar mensagem enviada             | Altera só o registro; não reenvia nem volta a ser agendada                                                                                     |
+| Excluir conexão                     | `deleteConnection` marca `deleting` (bloqueia escritas), apaga contatos e mensagens e, por fim, a conexão; pode ser repetida se interrompida   |
+| Contato excluído                    | Histórico preservado pelos snapshots dos destinatários                                                                                         |
+| Limites                             | Até 500 destinatários por mensagem (e 500 contatos por conexão no envio em massa), até 20 conexões por envio e 2.000 caracteres por mensagem   |
 
 ## Como executar
 
@@ -187,11 +198,11 @@ npm run test:rules       # (opcional) apenas Security Rules
 npm run test:functions   # (opcional) apenas Functions e agendador
 ```
 
-São **131 testes automatizados**: 105 no frontend, 5 nos validadores do backend e 21 de integração com o emulador.
+São **172 testes automatizados**: 140 no frontend, 5 nos validadores do backend e 27 de integração com o emulador.
 
-- **Rules:** isolamento entre tenants (leitura e escrita), spoofing e troca de `tenantId` ou `connectionId`, contato apontando para conexão alheia, escrita de mensagens bloqueada, perfil `tenants` e conexões em exclusão.
-- **Functions:** validação de entrada, destinatários de outro tenant ou conexão, edição de mensagens, agendamento sem navegador, reagendamento contra varredura antiga, varreduras concorrentes (envio único), mensagem excluída e cascata de exclusão. Os erros devolvem a chave estável para tradução.
-- **Frontend:** schemas, telefone, datas, imagem de perfil, nome de exibição, navegação, mensagens de erro, diálogo de confirmação, campo de telefone e assistente de ajuda.
+- **Rules:** isolamento entre tenants (leitura e escrita), spoofing e troca de `tenantId` ou `connectionId`, contato apontando para conexão alheia, escrita de mensagens bloqueada, perfil `tenants`, conexões em exclusão e `notifications` (só o dono lê e marca como lida, ninguém cria pelo cliente).
+- **Functions:** validação de entrada, destinatários de outro tenant ou conexão, edição de mensagens, agendamento sem navegador, reagendamento contra varredura antiga, varreduras concorrentes (envio único), mensagem excluída, cascata de exclusão, envio para várias conexões e notificações (criação única, agendador e exclusão). Os erros devolvem a chave estável para tradução.
+- **Frontend:** formatação de texto (leitura, atalhos e segurança contra HTML), listas com busca, editor, notificações, schemas, telefone, datas, imagem de perfil, nome de exibição, navegação, mensagens de erro, diálogo de confirmação, campo de telefone e assistente de ajuda.
 - **Idiomas:** paridade dos dois dicionários (mesmas chaves, mesmos `{parâmetros}`, plurais completos), interpolação e plural, persistência da troca de idioma, conteúdo da ajuda nos dois idiomas e cobertura de todas as chaves de erro do backend.
 
 ## Publicação
@@ -208,6 +219,9 @@ O Hosting serve `web/dist` com fallback para `index.html` (SPA). Registre dois u
 
 - **Foto de perfil sem Storage:** a imagem é recortada e reduzida para 256 px no navegador (JPEG, de 20 a 40 KB) e guardada como data URL em `tenants/{uid}.photoData`. As Security Rules aceitam só `data:image/...` de até 120 KB. Isso evita configurar mais um serviço para um avatar; para fotos grandes ou compartilhadas, o caminho natural seria o Firebase Storage.
 - **Idiomas sem biblioteca:** são só dois, e um dicionário tipado resolve com plural e parâmetros. Para muitos idiomas ou tradução por equipe, uma biblioteca como i18next compensaria.
+- **Formatação sem HTML:** o texto é guardado puro, com marcadores (`*negrito*`, `_itálico_`, `__sublinhado__`, `~riscado~`), e a interface monta elementos React a partir deles. Nada de HTML vindo do usuário, então não há risco de XSS. Um editor visual completo (Tiptap, por exemplo) seria a evolução.
+- **Calendário:** `@mui/x-date-pickers` com `dayjs`, carregado sob demanda só quando o usuário escolhe agendar.
+- **Notificações no app:** não há push do navegador nem e-mail; o aviso é no sino e na tela. Para avisar com o app fechado, o caminho seria Firebase Cloud Messaging.
 - **Frequência do agendador:** a cada minuto; o envio ocorre com tolerância de até cerca de 1 minuto. Para precisão por mensagem, a evolução natural seria Cloud Tasks.
 - **Sem RBAC:** há um usuário por cliente, então não há papéis.
 - **Sem App Check:** não está ativado nas Functions. Seria o próximo passo de hardening contra uso fora do app.
