@@ -37,3 +37,25 @@ export const isFuture = (value: string, now = Date.now()): boolean => {
   const time = new Date(value).getTime();
   return Number.isFinite(time) && time > now;
 };
+
+const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ["day", 86_400],
+  ["hour", 3_600],
+  ["minute", 60],
+];
+
+/** "agora", "há 5 minutos", "ontem"... no idioma informado. */
+export const formatRelative = (
+  date: Date,
+  locale: string,
+  now = Date.now(),
+): string => {
+  const seconds = Math.round((date.getTime() - now) / 1000);
+  const formatter = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  for (const [unit, size] of UNITS) {
+    if (Math.abs(seconds) >= size) {
+      return formatter.format(Math.trunc(seconds / size), unit);
+    }
+  }
+  return formatter.format(0, "second");
+};

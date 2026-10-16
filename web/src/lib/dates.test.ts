@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { isFuture, localInputToIso, toLocalInputValue } from "./dates";
+import {
+  formatRelative,
+  isFuture,
+  localInputToIso,
+  toLocalInputValue,
+} from "./dates";
 
 describe("dates", () => {
   it("round-trips a local datetime-local value to an absolute UTC instant", () => {
@@ -19,5 +24,24 @@ describe("dates", () => {
     expect(isFuture("2026-10-15T18:01", now)).toBe(true);
     expect(isFuture("2026-10-15T18:00", now)).toBe(false);
     expect(isFuture("", now)).toBe(false);
+  });
+});
+
+describe("formatRelative", () => {
+  const now = Date.parse("2026-10-15T12:00:00Z");
+
+  it("describes recent and older times in the given language", () => {
+    expect(formatRelative(new Date(now - 10_000), "pt-BR", now)).toBe(
+      "agora",
+    );
+    expect(formatRelative(new Date(now - 5 * 60_000), "pt-BR", now)).toBe(
+      "há 5 minutos",
+    );
+    expect(formatRelative(new Date(now - 3 * 3_600_000), "en-US", now)).toBe(
+      "3 hours ago",
+    );
+    expect(formatRelative(new Date(now - 86_400_000), "en-US", now)).toBe(
+      "yesterday",
+    );
   });
 });
