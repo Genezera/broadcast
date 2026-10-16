@@ -49,6 +49,26 @@ export const sendIfDue = (ref: DocumentReference): Promise<boolean> =>
     return true;
   });
 
+/**
+ * Anota uma falha de envio. Uma mensagem que nunca consegue ser enviada seria
+ * tentada para sempre (e poderia ocupar a página da varredura), então depois
+ * de algumas tentativas ela vira "failed" e sai da fila. Editar a mensagem a
+ * recoloca em uso. Devolve `true` quando a mensagem foi marcada como falha.
+ */
+export const recordFailure = (ref: DocumentReference): Promise<boolean> =>
+  db.runTransaction(async (transaction) => {
+    const current = await transaction.get(ref);
+    if (!current.exists || current.get("status") !== "scheduled") return false;
+    const attempts = ((current.get("attempts") as number | undefined) ?? 0) + 1;
+    const failed = attempts >= LIMITS.schedulerMaxAttempts;
+    transaction.update(ref, {
+      attempts,
+      ...(failed && { status: "failed" }),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return failed;
+  });
+
 /** Processa mensagens vencidas em páginas. Retorna quantas foram enviadas. */
 export const processDueMessages = async (): Promise<number> => {
   let sent = 0;
@@ -81,16 +101,27 @@ export const processDueMessages = async (): Promise<number> => {
     );
 
     let sentInPage = 0;
+    const failures: Promise<unknown>[] = [];
     results.forEach((result, index) => {
       if (result.status === "fulfilled") {
         if (result.value) sentInPage++;
       } else {
+        const { ref, id } = due.docs[index];
         logger.error("scheduled_message_failed", {
-          messageId: due.docs[index].id,
+          messageId: id,
           error: result.reason,
         });
+        failures.push(
+          recordFailure(ref).catch((cause) =>
+            logger.error("scheduled_failure_not_recorded", {
+              messageId: id,
+              error: cause,
+            }),
+          ),
+        );
       }
     });
+    await Promise.all(failures);
     sent += sentInPage;
     // Sem progresso: evita reler indefinidamente as mesmas mensagens com falha.
     if (sentInPage === 0) break;

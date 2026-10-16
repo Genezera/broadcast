@@ -25,7 +25,6 @@ import { assertActiveConnection, resolveRecipients } from "./recipients";
 export const updateMessage = onCall(callableOptions, async (request) => {
   const tenantId = requireTenantId(request.auth?.uid);
   const input = parseInput(updateMessageInput, request.data);
-  const scheduledMs = resolveScheduleMs(input, Date.now());
   const ref = collections.messages.doc(input.messageId);
 
   await db.runTransaction(async (transaction) => {
@@ -49,6 +48,21 @@ export const updateMessage = onCall(callableOptions, async (request) => {
       input.contactIds,
       (current.get("recipients") ?? []) as Recipient[],
     );
+
+    // Uma agendada cujo horário já passou, mas que o agendador ainda não
+    // enviou (até ~1 minuto), pode ter só o texto ou os contatos editados sem
+    // mudar a data: nesse caso o horário original é mantido em vez de recusado.
+    const currentSchedule = current.get("scheduledAt") as Timestamp | null;
+    const keepsSchedule =
+      current.get("status") === "scheduled" &&
+      input.mode === "scheduled" &&
+      !!currentSchedule &&
+      !!input.scheduledAt &&
+      Date.parse(input.scheduledAt) === currentSchedule.toMillis();
+    const scheduledMs =
+      keepsSchedule && currentSchedule
+        ? currentSchedule.toMillis()
+        : resolveScheduleMs(input, Date.now());
 
     const alreadySent = current.get("status") === "sent";
     // Se o agendador enviou a mensagem entre abrir e salvar a edição, não
@@ -83,6 +97,8 @@ export const updateMessage = onCall(callableOptions, async (request) => {
     }
     transaction.update(ref, {
       ...content,
+      // Editar recoloca a mensagem na fila: zera as tentativas de uma "failed".
+      attempts: 0,
       status: scheduledMs === null ? "sent" : "scheduled",
       scheduledAt:
         scheduledMs === null ? null : Timestamp.fromMillis(scheduledMs),

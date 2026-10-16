@@ -18,4 +18,6 @@ export const LIMITS = {
   schedulerPageSize: 100,
   /** Teto de páginas por execução, para não monopolizar a instância. */
   schedulerMaxPages: 20,
+  /** Tentativas de envio antes de a mensagem ser marcada como "failed". */
+  schedulerMaxAttempts: 5,
 } as const;

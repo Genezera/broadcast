@@ -4,7 +4,7 @@ import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
 process.env.GCLOUD_PROJECT = "demo-broadcast-functions";
 const functions = await import("../functions/lib/index.js");
-const { processDueMessages } =
+const { processDueMessages, recordFailure } =
   await import("../functions/lib/scheduled/processScheduled.js");
 const db = getFirestore();
 
@@ -544,4 +544,91 @@ test("deleting a message also removes its notification", async () => {
     (await db.collection("notifications").doc(id).get()).exists,
     false,
   );
+});
+
+const scheduledInOwnConnection = (extra = {}) =>
+  functions.createMessage.run(
+    as(
+      "alice",
+      newMessage({
+        connectionId: "n-conn-a",
+        contactIds: ["n-contact-1"],
+        mode: "scheduled",
+        scheduledAt: hoursFromNow(1),
+        ...extra,
+      }),
+    ),
+  );
+
+test("a scheduled message whose time just passed can be edited keeping its date", async () => {
+  const { id } = await scheduledInOwnConnection();
+  const ref = db.collection("messages").doc(id);
+  // O horário passou, mas o agendador ainda não rodou.
+  await ref.update({ scheduledAt: secondsAgo(30) });
+  const keptAt = (await ref.get()).get("scheduledAt").toDate().toISOString();
+
+  await functions.updateMessage.run(
+    as("alice", {
+      messageId: id,
+      contactIds: ["n-contact-1"],
+      body: "Texto corrigido",
+      mode: "scheduled",
+      scheduledAt: keptAt,
+    }),
+  );
+  const edited = await ref.get();
+  assert.equal(edited.get("body"), "Texto corrigido");
+  assert.equal(edited.get("status"), "scheduled");
+  assert.equal(edited.get("scheduledAt").toDate().toISOString(), keptAt);
+
+  // Já uma data passada diferente da original continua sendo recusada.
+  await assert.rejects(
+    () =>
+      functions.updateMessage.run(
+        as("alice", {
+          messageId: id,
+          contactIds: ["n-contact-1"],
+          body: "Outra data",
+          mode: "scheduled",
+          scheduledAt: new Date(Date.now() - 3_600_000).toISOString(),
+        }),
+      ),
+    (error) => error.details?.key === "scheduleOutOfRange",
+  );
+});
+
+test("a message that keeps failing is marked as failed and leaves the queue", async () => {
+  const { id } = await scheduledInOwnConnection();
+  const ref = db.collection("messages").doc(id);
+  await ref.update({ scheduledAt: secondsAgo(5) });
+
+  for (let attempt = 1; attempt < 5; attempt++) {
+    assert.equal(await recordFailure(ref), false);
+    const current = await ref.get();
+    assert.equal(current.get("attempts"), attempt);
+    assert.equal(current.get("status"), "scheduled");
+  }
+  assert.equal(await recordFailure(ref), true);
+  assert.equal((await ref.get()).get("status"), "failed");
+
+  // Fora da fila: a varredura não envia nem mexe mais nela.
+  await processDueMessages();
+  assert.equal((await ref.get()).get("status"), "failed");
+  assert.equal(
+    (await db.collection("notifications").doc(id).get()).exists,
+    false,
+  );
+
+  // Editar recoloca a mensagem em uso e zera as tentativas.
+  await functions.updateMessage.run(
+    as("alice", {
+      messageId: id,
+      contactIds: ["n-contact-1"],
+      body: "Tentar de novo",
+      mode: "now",
+    }),
+  );
+  const retried = await ref.get();
+  assert.equal(retried.get("status"), "sent");
+  assert.equal(retried.get("attempts"), 0);
 });
