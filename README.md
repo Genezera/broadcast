@@ -1,8 +1,8 @@
 # Broadcast
 
-Aplicação SaaS multi-tenant simplificada para organizar **conexões**, **contatos** e **mensagens em massa (simuladas)**, com envio imediato ou agendado. Nenhuma mensagem é realmente enviada: o disparo é uma simulação.
+Aplicação SaaS multi-tenant para organizar **conexões**, **contatos** e **mensagens em massa (simuladas)**, com envio imediato ou agendado. Nenhuma mensagem é realmente enviada: o disparo é uma simulação.
 
-Publicado em: https://broadcast-renan-2026.web.app
+Roda localmente com os emuladores do Firebase, sem precisar de um projeto real: veja [Como executar](#como-executar).
 
 - **Frontend:** React 19 + TypeScript + Vite, Material UI + Tailwind CSS, React Router, React Hook Form + Zod.
 - **Backend:** Firebase Authentication, Firestore, Cloud Functions v2 (Node 22) e Cloud Scheduler.
@@ -215,7 +215,7 @@ npx firebase use --add          # selecione o projeto
 npx firebase deploy --only firestore,functions,hosting
 ```
 
-O Hosting serve `web/dist` com fallback para `index.html` (SPA). O `index.html` e as demais páginas saem com `Cache-Control: no-cache` (um deploy novo vale na hora) e os arquivos de `/assets` com cache longo e imutável, porque o nome deles muda a cada build. Registre dois usuários distintos no app publicado para demonstrar o isolamento. O build de produção lê a configuração do app Web em `web/.env.production` (ou `web/.env.local`), que não vai para o repositório; use `web/.env.example` como modelo. São valores públicos: a segurança vem das Security Rules, não do sigilo dessas chaves.
+O Hosting serve `web/dist` com fallback para `index.html` (SPA). O `index.html` e as demais páginas saem com `Cache-Control: no-cache` (um deploy novo vale na hora) e os arquivos de `/assets` com cache longo e imutável, porque o nome deles muda a cada build. Para ver o isolamento na prática, crie duas contas: uma não enxerga os dados da outra. O build de produção lê a configuração do app Web em `web/.env.production` (ou `web/.env.local`), que não vai para o repositório; use `web/.env.example` como modelo. São valores públicos: a segurança vem das Security Rules, não do sigilo dessas chaves.
 
 ## Decisões e limitações
 
